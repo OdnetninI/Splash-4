@@ -18,6 +18,30 @@ benchmark folder before executing it.
 
 ## Citing Splash-4
 
+    Eduardo José Gómez-Hernández, Ruixiang Shao, Christos Sakalis, 
+    Stefanos Kaxiras, Alberto Ros, "Splash-4: Improving Scalability 
+    with Lock-Free Constructs". International Symposium on Performance 
+    Analysis of Systems and Software (ISPASS), pages 235--236, 
+    Worldwide event, March 2021
+
+### BibTeX
+    
+    @InProceedings{ejgomez-ispass21,
+      author = 	     {Eduardo Jos{\'e} G{\'o}mez-Hern{\'a}ndez and Ruixiang Shao and Christos Sakalis and Stefanos Kaxiras and Alberto Ros},
+      title = 	     {Splash-4: Improving Scalability with Lock-Free Constructs},
+      booktitle =    {International Symposium on Performance Analysis of Systems and Software (ISPASS)},
+      doi =          {10.1109/ISPASS51385.2021.00044},
+      editor =       {IEEE Computer Society},
+      pages = 	     {235--236},
+      year = 	     {2021},
+      address =      {Worldwide event},
+      month = 	     mar,
+      publisher =    {IEEE Computer Society},
+      ratio-acep =   {36.92% (24/65)},
+      isbn =         {978-1-7281-8643-6},
+    }
+
+
 
 ## Recommended Inputs
 
