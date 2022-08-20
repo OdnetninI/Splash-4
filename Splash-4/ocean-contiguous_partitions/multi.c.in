@@ -94,9 +94,8 @@ void multig(long my_id)
      }
      UNLOCK(locks->error_lock)
 */
-     double expected;
+     double expected = LOAD(multi->err_multi);
      do {
-       expected = multi->err_multi;
        if (local_err <= expected) break;
      } while (!CAS(multi->err_multi, expected, local_err));
 	

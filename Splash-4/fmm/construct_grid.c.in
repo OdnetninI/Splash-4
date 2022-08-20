@@ -830,9 +830,8 @@ InsertBoxInGrid (long my_id, box *b, box *pb)
 	 success = FALSE;
       UNLOCK(G_Memory->single_lock);
    */
-      box * expected;
+     box * expected = LOAD(Grid);
       do {
-         expected = Grid;
          if (expected != NULL) {
             success = FALSE;
             break;

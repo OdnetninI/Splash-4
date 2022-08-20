@@ -39,10 +39,9 @@ m4_define(CAS, `({_NOTE_START_CMPXCHG(); _Bool ___b = atomic_compare_exchange_we
 m4_define(_CAS, `({_Bool ___b = atomic_compare_exchange_weak(($1), &($2), $3); ___b;})') m4_dnl Only intended for internal use
 m4_define(FETCH_ADD_DOUBLE, `({
   _NOTE_START_CMPXCHG(); 
-  double ___oldValue;
+  double ___oldValue = LOAD(*($1));
   double ___newValue;
   do {
-    ___oldValue = *($1);
     ___newValue = ___oldValue + $2;
   } while (!_CAS($1, ___oldValue, ___newValue));
   _NOTE_END_CMPXCHG(); 
@@ -63,9 +62,9 @@ _NOTE_START_BARRIER();
 __local_sense__ = !__local_sense__;
 if (atomic_fetch_sub(&(__count__), 1) == 1) {
 	__count__ = $2;
-	__sense__ = __local_sense__;
+	STORE(__sense__, __local_sense__);
 } else {
-	do {} while (__sense__ != __local_sense__);
+	do {} while (LOAD(__sense__) != __local_sense__);
 }
 _NOTE_END_BARRIER();
 }'

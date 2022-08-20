@@ -117,10 +117,9 @@ retry_entry:
     long bar_done = !(global->pbar_count < n_processors);
     UNLOCK(global->pbar_lock);
 */
-	long expected;
+	long expected = LOAD(global->pbar_count);
 	long result;
 	do {
-	  expected = global->pbar_count;
 	  if( expected >= n_processors ) result = 1;
 	  else result = expected + 1;
 	} while(!CAS(global->pbar_count, expected, result));
@@ -565,16 +564,15 @@ int peek_dequeue(long qid, long max_visit, long process_id)
 		*/
 		
 		int exit;
-		long expectedNTasks;
-		Task *expectedTop;
+		long expectedNTasks = LOAD(tq->n_tasks);
+		Task *expectedTop = LOAD(tq->top);
 		do {
 			exit = 0;
-			expectedNTasks = tq->n_tasks;
 			if (expectedNTasks <= 0) break;
 			exit = 1;
+
 			do {
 				task_found = 0;
-				expectedTop = tq->top;
 				if (!expectedTop) break;
 				task_found = 1;
 			} while (!CAS(tq->top, expectedTop, expectedTop));
@@ -796,10 +794,9 @@ long check_task_counter()
 
     UNLOCK(global->task_counter_lock);
 */
-	long expected;
+	long expected = LOAD(global->task_counter);
 	long result;
 	do {
-		expected = global->task_counter;
 		flag = 0;
 		if (expected == 0)
 			flag = 1;

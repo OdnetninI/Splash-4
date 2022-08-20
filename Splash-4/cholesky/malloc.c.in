@@ -140,8 +140,8 @@ char *MyMalloc(long size, long home)
       mem_pool[home].freeBlock[bucket] = NEXTFREE(result);
     UNLOCK(mem_pool[home].memoryLock)*/
     
+    result = LOAD(mem_pool[home].freeBlock[bucket]);
     do {
-      result = mem_pool[home].freeBlock[bucket];
       if (!result) break;
     } while (!CAS(mem_pool[home].freeBlock[bucket], result, NEXTFREE(result)));
   }

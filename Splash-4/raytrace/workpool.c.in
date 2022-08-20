@@ -161,8 +161,8 @@ INT	GetJob(RAYJOB *job, INT pid)
 	gm->workpool[pid][0] = wpentry->next;
 	AULOCK(gm->wplock, pid)
 */
+	wpentry = LOAD(gm->workpool[pid][0]);
 	do {
-		wpentry = gm->workpool[pid][0];
 		if (!wpentry) return WPS_EMPTY;
 	} while (!CAS(gm->workpool[pid][0], wpentry, wpentry->next));
 	
