@@ -18,29 +18,29 @@ benchmark folder before executing it.
 
 ## Citing Splash-4
 
-    Eduardo José Gómez-Hernández, Ruixiang Shao, Christos Sakalis, 
-    Stefanos Kaxiras, Alberto Ros, "Splash-4: Improving Scalability 
-    with Lock-Free Constructs". International Symposium on Performance 
-    Analysis of Systems and Software (ISPASS), pages 235--236, 
-    Worldwide event, March 2021
+    Eduardo José Gómez-Hernández, Juan Manuel Cebrian, 
+    Stefanos Kaxiras, Alberto Ros, "Splash-4: A Modern Benchmark
+    Suite with Lock-Free Constructs". 2022 IEEE International
+    Symposium on Workload Characterization (IISWC), pages 56--64, 
+    Austin, Texas, November 2022
 
 ### BibTeX
     
-    @InProceedings{ejgomez-ispass21,
-      author = 	     {Eduardo Jos{\'e} G{\'o}mez-Hern{\'a}ndez and Ruixiang Shao and Christos Sakalis and Stefanos Kaxiras and Alberto Ros},
-      title = 	     {Splash-4: Improving Scalability with Lock-Free Constructs},
-      booktitle =    {International Symposium on Performance Analysis of Systems and Software (ISPASS)},
-      doi =          {10.1109/ISPASS51385.2021.00044},
-      editor =       {IEEE Computer Society},
-      pages = 	     {235--236},
-      year = 	     {2021},
-      address =      {Worldwide event},
-      month = 	     mar,
+    @InProceedings{ejgomez-iiswc22,
+      author =       {Eduardo Jos{\'e} G{\'o}mez-Hern{\'a}ndez and Juan Manuel Cebrian and Stefanos Kaxiras and Alberto Ros},
+      title =        {Splash-4: A Modern Benchmark Suite with Lock-Free Constructs},
+      booktitle =    {2022 IEEE International Symposium on Workload Characterization (IISWC)},
+      doi =          {10.1109/IISWC55918.2022.00015},
+      pages =        {51-64},
+      year =         {2022},
+      editor =       {},
+      address =      {Austin, TX (USA)},
+      month =        nov,
       publisher =    {IEEE Computer Society},
-      ratio-acep =   {36.92% (24/65)},
-      isbn =         {978-1-7281-8643-6},
-    }
-
+      ratio-acep =   {47.92% (23/48)},
+      isbn =         {},
+      url =          {http://webs.um.es/aros/papers/pdfs/ejgomez-iiswc22.pdf}
+    } 
 
 
 ## Recommended Inputs
