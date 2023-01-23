@@ -1,0 +1,38 @@
+# Emacs temp files
+*~
+
+# Object files
+*.o
+*.a
+
+# Keep .in files
+! *.in
+
+# Sources are in .in files, so exclude generated .c and .h files
+*.c
+*.h
+
+# Keep libraries .c and .h
+! Splash-4/radiosity/glibps/*.c
+! Splash-4/radiosity/glibps/*.h
+! Splash-4/radiosity/glibdumb/*.c
+! Splash-4/radiosity/glibdumb/*.h
+! Splash-4/volrend/libtiff/*.c
+! Splash-4/volrend/libtiff/*.h
+
+# Binaries
+Splash-4/barnes/BARNES
+Splash-4/cholesky/CHOLESKY
+Splash-4/fft/FFT
+Splash-4/fmm/FMM
+Splash-4/lu-contiguous_blocks/LU-CONT
+Splash-4/lu-non_contiguous_blocks/LU-NOCONT
+Splash-4/ocean-contiguous_partitions/OCEAN-CONT
+Splash-4/ocean-non_contiguous_partitions/OCEAN-NOCONT
+Splash-4/radiosity/RADIOSITY
+Splash-4/radix/RADIX
+Splash-4/raytrace/RAYTRACE
+Splash-4/volrend/VOLREND
+Splash-4/water-nsquared/WATER-NSQUARED
+Splash-4/water-spatial/WATER-SPATIAL
+
