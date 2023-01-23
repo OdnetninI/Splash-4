@@ -214,12 +214,12 @@ int main(int argc, char *argv[])
     PrintA();
   }
 
-  SPLASH3_ROI_BEGIN();
+  SPLASH4_ROI_BEGIN();
 
   CREATE(SlaveStart, P);
   WAIT_FOR_END(P);
 
-  SPLASH3_ROI_END();
+  SPLASH4_ROI_END();
 
   if (doprint) {
     printf("\nMatrix after decomposition:\n");

@@ -141,10 +141,10 @@ main (int argc, char *argv[])
    }
    ParallelExecute();
    WAIT_FOR_END(Number_Of_Processors - 1);*/
-   SPLASH3_ROI_BEGIN();
+   SPLASH4_ROI_BEGIN();
    CREATE(ParallelExecute, Number_Of_Processors);
    WAIT_FOR_END(Number_Of_Processors);
-   SPLASH3_ROI_END();
+   SPLASH4_ROI_END();
 
    printf("Finished FMM\n");
    PrintTimes();

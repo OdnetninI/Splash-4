@@ -321,12 +321,12 @@ int main(int argc, char *argv[])
 
   /* fire off P processes */
 
-  SPLASH3_ROI_BEGIN();
+  SPLASH4_ROI_BEGIN();
 
   CREATE(SlaveStart, P);
   WAIT_FOR_END(P);
 
-  SPLASH3_ROI_END();
+  SPLASH4_ROI_END();
 
   if (doprint) {
     if (test_result) {

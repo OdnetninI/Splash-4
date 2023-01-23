@@ -457,10 +457,10 @@ int	main(int argc, CHAR *argv[])
 	 */
 
 	CLOCK(begin);
-	SPLASH3_ROI_BEGIN();
+	SPLASH4_ROI_BEGIN();
 	CREATE(StartRayTrace, gm->nprocs);
 	WAIT_FOR_END(gm->nprocs);
-	SPLASH3_ROI_END();
+	SPLASH4_ROI_END();
 	CLOCK(end);
 
 

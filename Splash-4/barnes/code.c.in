@@ -268,10 +268,10 @@ int main (int argc, string argv[])
 
    printf("COMPUTESTART  = %12lu\n",Global->computestart);
 
-   SPLASH3_ROI_BEGIN();
+   SPLASH4_ROI_BEGIN();
    CREATE(SlaveStart, NPROC);
    WAIT_FOR_END(NPROC);
-   SPLASH3_ROI_END();
+   SPLASH4_ROI_END();
    
    CLOCK(Global->computeend);
 

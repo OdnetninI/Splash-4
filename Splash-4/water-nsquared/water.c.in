@@ -247,13 +247,13 @@ int main(int argc, char **argv)
     /* spawn helper processes, each getting its unique process id */
     CLOCK(gl->computestart);
 
-    SPLASH3_ROI_BEGIN();
+    SPLASH4_ROI_BEGIN();
 
     CREATE(WorkStart, NumProcs);
 
     /* macro to make main process wait for all others to finish */
     WAIT_FOR_END(NumProcs);
-    SPLASH3_ROI_END();
+    SPLASH4_ROI_END();
     CLOCK(gl->computeend);
 
 

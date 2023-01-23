@@ -253,12 +253,12 @@ int main(int argc, char *argv[])
   ComputeRemainingFO();
   ComputeReceivedFO();
 
-  SPLASH3_ROI_BEGIN();
+  SPLASH4_ROI_BEGIN();
 
   CREATE(Go, P);
   WAIT_FOR_END(P);
 
-  SPLASH3_ROI_END();
+  SPLASH4_ROI_END();
 
   printf("%.0f operations for factorization\n", work_tree[M.n]);
 

@@ -311,7 +311,7 @@ int main(int argc, char *argv[])
    }  */
 
    /* Fill the random-number array. */
-   SPLASH3_ROI_BEGIN();
+   SPLASH4_ROI_BEGIN();
 
    CREATE(slave_sort, number_of_processors);
    WAIT_FOR_END(number_of_processors);
@@ -364,7 +364,7 @@ int main(int argc, char *argv[])
      printf("\n");
    }
 
-   SPLASH3_ROI_END();
+   SPLASH4_ROI_END();
 
    printf("\n");
    global->starttime = start;

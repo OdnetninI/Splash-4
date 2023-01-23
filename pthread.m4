@@ -5,8 +5,8 @@ m4_divert(-1)
 m4_define(NEWPROC,) m4_dnl
 
 m4_dnl Empty ROI markers
-m4_define(SPLASH3_ROI_BEGIN, `')
-m4_define(SPLASH3_ROI_END, `')
+m4_define(SPLASH4_ROI_BEGIN, `')
+m4_define(SPLASH4_ROI_END, `')
 
 m4_dnl Region markers
 m4_define(_NOTE_START_LOCK, `')
