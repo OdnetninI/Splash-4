@@ -98,7 +98,7 @@ void InitX(double* x);
 void InitU(long N, double* u);
 void InitU2(long N, double* u, long n1);
 long BitReverse(long M, long k);
-void FFT1D(long direction, long M, long N, double* x, double* scratch, double* upriv, double* umain2, long thread_id, long *l_transtime, long MyFirst, long MyLast, long pad_length, bool test_result, bool dostats);
+void FFT1D(long direction, long M, long N, double* x, double* scratch, double* upriv, double* umain2, long thread_id, long MyFirst, long MyLast, long pad_length, bool test_result, bool dostats);
 void TwiddleOneCol(long direction, long n1, long j, double* u, double* x, long pad_length);
 void Scale(long n1, long N, double* x);
 void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst, long MyLast, long pad_length);
@@ -335,9 +335,7 @@ void ArgumentParser(int argc, char* argv[]) {
 }
 
 
-void ParallelMain() {
-  long l_transtime=0;
-  
+void ParallelMain() {  
   long thread_id = FETCH_ADD(Global->id, 1)
 
   double* upriv = (double* ) malloc(2*(rootN-1)*sizeof(double));  
@@ -355,11 +353,11 @@ void ParallelMain() {
   TouchArray(x, trans, umain2, upriv, MyFirst, MyLast);
 
   /* perform forward FFT */
-  FFT1D(1, M, N, x, trans, upriv, umain2, thread_id, &l_transtime, MyFirst, MyLast, pad_length, test_result, dostats);
+  FFT1D(1, M, N, x, trans, upriv, umain2, thread_id, MyFirst, MyLast, pad_length, test_result, dostats);
 
   /* perform backward FFT */
   if (test_result) {
-    FFT1D(-1, M, N, x, trans, upriv, umain2, thread_id, &l_transtime, MyFirst, MyLast, pad_length, test_result, dostats);
+    FFT1D(-1, M, N, x, trans, upriv, umain2, thread_id, MyFirst, MyLast, pad_length, test_result, dostats);
   }  
 }
 
@@ -442,7 +440,7 @@ long BitReverse(long M, long k) {
 }
 
 
-void FFT1D(long direction, long M, long N, double* x, double* scratch, double* upriv, double* umain2, long thread_id, long *l_transtime, long MyFirst, long MyLast, long pad_length, bool test_result, bool dostats) {
+void FFT1D(long direction, long M, long N, double* x, double* scratch, double* upriv, double* umain2, long thread_id, long MyFirst, long MyLast, long pad_length, bool test_result, bool dostats) {
   long m1 = M/2;
   long n1 = 1<<m1;
 
