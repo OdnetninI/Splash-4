@@ -470,8 +470,7 @@ void FFT1D(long direction, long M, long N, double* x, double* scratch, double* u
     if (direction == -1)
       Scale(n1, N, &x[2*j*(n1+pad_length)]);
   }
-
-  // Apart from timming, this barrier prevents slower threads from reading newer data
+  
   BARRIER(Global->barrier, NumThreads);
 
   /* transpose back */
