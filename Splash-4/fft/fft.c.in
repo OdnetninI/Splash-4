@@ -40,8 +40,6 @@
 /*  -o  : Print out complex data points.                                    */
 /*  -h  : Print out command line options.                                   */
 /*                                                                          */
-/*  Note: This version works under both the FORK and SPROC models           */
-/*                                                                          */
 /****************************************************************************/
 
 #include <stdio.h>
@@ -64,11 +62,6 @@ MAIN_ENV
 struct GlobalMemory {
   long id;
   BARDEC(barrier)
-  long *transtimes;
-  long *totaltimes;
-  unsigned long starttime;
-  unsigned long finishtime;
-  unsigned long initdonetime;
 } *Global;
 
 // Running Options
@@ -119,10 +112,7 @@ long log_2(long number);
 /*
   Main
 */
-int main(int argc, char *argv[]) {  
-  unsigned long start;
-  CLOCK(start);
-  
+int main(int argc, char *argv[]) {    
   ArgumentParser(argc, argv);
   long m1 = M/2;
 
@@ -172,9 +162,7 @@ int main(int argc, char *argv[]) {
   trans = (double* ) G_MALLOC(2*(N+rootN*pad_length)*sizeof(double)+PAGE_SIZE);
   umain = (double* ) G_MALLOC(2*rootN*sizeof(double));  
   umain2 = (double* ) G_MALLOC(2*(N+rootN*pad_length)*sizeof(double)+PAGE_SIZE);
-
-  Global->transtimes = (long *) G_MALLOC(NumThreads * sizeof(long));  
-  Global->totaltimes = (long *) G_MALLOC(NumThreads * sizeof(long));  
+  
   if (Global == NULL) {
     printerr("Could not malloc memory for Global\n");
     exit(-1);
@@ -269,67 +257,6 @@ int main(int argc, char *argv[]) {
     PrintArray(N, x);
   }
 
-  long transtime = Global->transtimes[0];
-  printf("\n");
-  printf("                 PROCESS STATISTICS\n");
-  printf("            Computation      Transpose     Transpose\n");
-  printf(" Proc          Time            Time        Fraction\n");
-  printf("    0        %10ld     %10ld      %8.5f\n",
-         Global->totaltimes[0],Global->transtimes[0],
-         ((double)Global->transtimes[0])/Global->totaltimes[0]);
-  if (dostats) {
-    long transtime2 = Global->transtimes[0];
-    long avgtranstime = Global->transtimes[0];
-    long avgcomptime = Global->totaltimes[0];
-    long maxtotal = Global->totaltimes[0];
-    long mintotal = Global->totaltimes[0];
-    double maxfrac = ((double)Global->transtimes[0])/Global->totaltimes[0];
-    double minfrac = ((double)Global->transtimes[0])/Global->totaltimes[0];
-    double avgfractime = ((double)Global->transtimes[0])/Global->totaltimes[0];
-    for (long i = 1; i < NumThreads; i++) {
-      if (Global->transtimes[i] > transtime) transtime = Global->transtimes[i];
-      if (Global->transtimes[i] < transtime2) transtime2 = Global->transtimes[i];
-      if (Global->totaltimes[i] > maxtotal) maxtotal = Global->totaltimes[i];
-      if (Global->totaltimes[i] < mintotal) mintotal = Global->totaltimes[i];
-      
-      if (((double)Global->transtimes[i])/Global->totaltimes[i] > maxfrac)
-	maxfrac = ((double)Global->transtimes[i])/Global->totaltimes[i];
-      if (((double)Global->transtimes[i])/Global->totaltimes[i] < minfrac)
-	minfrac = ((double)Global->transtimes[i])/Global->totaltimes[i];
-      
-      printf("  %3ld        %10ld     %10ld      %8.5f\n",
-             i,Global->totaltimes[i],Global->transtimes[i],
-             ((double)Global->transtimes[i])/Global->totaltimes[i]);
-      avgtranstime += Global->transtimes[i];
-      avgcomptime += Global->totaltimes[i];
-      avgfractime += ((double)Global->transtimes[i])/Global->totaltimes[i];
-    }
-    printf("  Avg        %10.0f     %10.0f      %8.5f\n",
-           ((double) avgcomptime)/NumThreads, ((double) avgtranstime)/NumThreads, avgfractime/NumThreads);
-    printf("  Max        %10ld     %10ld      %8.5f\n",
-	   maxtotal,transtime,maxfrac);
-    printf("  Min        %10ld     %10ld      %8.5f\n",
-	   mintotal,transtime2,minfrac);
-  }
-  Global->starttime = start;
-  printf("\n");
-  printf("                 TIMING INFORMATION\n");
-  printf("Start time                        : %16lu\n",
-	  Global->starttime);
-  printf("Initialization finish time        : %16lu\n",
-	  Global->initdonetime);
-  printf("Overall finish time               : %16lu\n",
-	  Global->finishtime);
-  printf("Total time with initialization    : %16lu\n",
-	  Global->finishtime-Global->starttime);
-  printf("Total time without initialization : %16lu\n",
-	  Global->finishtime-Global->initdonetime);
-  printf("Overall transpose time            : %16ld\n",
-         transtime);
-  printf("Overall transpose fraction        : %16.5f\n",
-         ((double) transtime)/(Global->finishtime-Global->initdonetime));
-  printf("\n");
-
   if (test_result) {
     double ck3 = CheckSum(x);
     printf("              INVERSE FFT TEST RESULTS\n");
@@ -413,10 +340,6 @@ void ParallelMain() {
   
   long thread_id = FETCH_ADD(Global->id, 1)
 
-  // This barrier is not needed at all
-  // It was probably used to make all threads to wait for binding them
-  BARRIER(Global->barrier, NumThreads);
-
   double* upriv = (double* ) malloc(2*(rootN-1)*sizeof(double));  
   if (upriv == NULL) {
     fprintf(stderr,"Proc %ld could not malloc memory for upriv\n",thread_id);
@@ -431,18 +354,6 @@ void ParallelMain() {
 
   TouchArray(x, trans, umain2, upriv, MyFirst, MyLast);
 
-  // Make sure that all Threads has been intialized and cached all the data
-  BARRIER(Global->barrier, NumThreads);
-
-  /*
-    POSSIBLE ENHANCEMENT:
-    Here is where one might reset the statistics that one is measuring about the parallel execution
-  */
-  long initdone;
-  if ((thread_id == 0) || (dostats)) {
-    CLOCK(initdone);
-  }
-
   /* perform forward FFT */
   FFT1D(1, M, N, x, trans, upriv, umain2, thread_id, &l_transtime, MyFirst, MyLast, pad_length, test_result, dostats);
 
@@ -450,17 +361,6 @@ void ParallelMain() {
   if (test_result) {
     FFT1D(-1, M, N, x, trans, upriv, umain2, thread_id, &l_transtime, MyFirst, MyLast, pad_length, test_result, dostats);
   }  
-  
-  if (thread_id == 0) {
-    long finish;
-    CLOCK(finish);
-    if (dostats) {
-      Global->transtimes[thread_id] = l_transtime;
-      Global->totaltimes[thread_id] = finish - initdone;
-    }
-    Global->finishtime = finish;
-    Global->initdonetime = initdone;
-  }
 }
 
 
@@ -543,52 +443,26 @@ long BitReverse(long M, long k) {
 
 
 void FFT1D(long direction, long M, long N, double* x, double* scratch, double* upriv, double* umain2, long thread_id, long *l_transtime, long MyFirst, long MyLast, long pad_length, bool test_result, bool dostats) {
-  unsigned long clocktime1;
-  unsigned long clocktime2;
-
   long m1 = M/2;
   long n1 = 1<<m1;
 
-  printf("iter_num = %lu\n", MyLast - MyFirst);
-
-  // This barrier is not needed
-  // Probably was to have better accurated clock timing
-  BARRIER(Global->barrier, NumThreads);
-
-  if ((thread_id == 0) || (dostats)) {
-    CLOCK(clocktime1);
+  if(is_output){
+    printf("iter_num = %lu\n", MyLast - MyFirst);
   }
 
   /* transpose from x into scratch */
   Transpose(n1, x, scratch, thread_id, MyFirst, MyLast, pad_length);
-  
-  if ((thread_id == 0) || (dostats)) {
-    CLOCK(clocktime2);
-    *l_transtime += (clocktime2-clocktime1);
-    printf("Step 1: %8lu\n", clocktime2-clocktime1);
-  }
 
   /* do n1 1D FFTs on columns */
   for (long j = MyFirst; j < MyLast; j++) {
     FFT1DOnce(direction, m1, n1, upriv, &scratch[2*j*(n1+pad_length)]);
     TwiddleOneCol(direction, n1, j, umain2, &scratch[2*j*(n1+pad_length)], pad_length);
   }  
-
-  // Apart from timming, this barrier prevents slower threads from reading newer data
+  
   BARRIER(Global->barrier, NumThreads);
 
-  if ((thread_id == 0) || (dostats)) {
-    CLOCK(clocktime1);
-    printf("Step 2: %8lu\n", clocktime1-clocktime2);
-  }
   /* transpose */
   Transpose(n1, scratch, x, thread_id, MyFirst, MyLast, pad_length);
-
-  if ((thread_id == 0) || (dostats)) {
-    CLOCK(clocktime2);
-    *l_transtime += (clocktime2-clocktime1);
-    printf("Step 3: %8lu\n", clocktime2-clocktime1);
-  }
 
   /* do n1 1D FFTs on columns again */
   for (long j = MyFirst; j < MyLast; j++) {
@@ -600,25 +474,13 @@ void FFT1D(long direction, long M, long N, double* x, double* scratch, double* u
   // Apart from timming, this barrier prevents slower threads from reading newer data
   BARRIER(Global->barrier, NumThreads);
 
-  if ((thread_id == 0) || (dostats)) {
-    CLOCK(clocktime1);
-    printf("Step 4: %8lu\n", clocktime1-clocktime2);
-  }
-
   /* transpose back */
   Transpose(n1, x, scratch, thread_id, MyFirst, MyLast, pad_length);
 
-  if ((thread_id == 0) || (dostats)) {
-    CLOCK(clocktime2);
-    *l_transtime += (clocktime2 - clocktime1);
-    printf("Step 5: %8lu\n", clocktime2-clocktime1);
-  }
-
-  // All threads has finished, and the data can be copied to the output
-  BARRIER(Global->barrier, NumThreads);
-
   /* copy columns from scratch to x */
-  if ((test_result) || (doprint)) {  
+  if ((test_result) || (doprint)) {
+    // All threads has finished, and the data can be copied to the output
+    BARRIER(Global->barrier, NumThreads);
     for (long j = MyFirst; j < MyLast; j++) {
       CopyColumn(n1, &scratch[2*j*(n1+pad_length)], &x[2*j*(n1+pad_length)]); 
     }  
@@ -681,8 +543,10 @@ void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst,
       v_off+=blksize;
     }
   }
-  
-  printf("Transpose: iter_num = %lu\n", iter_num);
+
+  if(is_output){
+    printf("Transpose: iter_num = %lu\n", iter_num);
+  }
 
   for (long l = 0; l < thread_id; l++) {
     long v_off = l * row_count;
