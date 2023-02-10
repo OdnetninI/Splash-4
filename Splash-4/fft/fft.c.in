@@ -33,7 +33,8 @@
 /*  -pNumThreads : NumThreads = number of processors; Must be a power of 2. */
 /*  -nN : N = number of cache lines.                                        */
 /*  -lL : L = Log base 2 of cache line length in bytes.                     */
-/*  -s  : Print individual processor timing statistics.                     */
+/*  -y  : Enable touching the data before operations.                       */
+/*        It is not useful when measuring the full application or the ROI.  */
 /*  -t  : Perform FFT and inverse FFT.  Test output by comparing the        */
 /*        integral of the original data to the integral of the data         */
 /*        that results from performing the FFT and inverse FFT.             */
@@ -67,8 +68,8 @@ struct GlobalMemory {
 // Running Options
 bool test_result = false;
 bool doprint = false;
-bool dostats = false;
 bool is_output = false;
+bool doprefetch = false;
 long NumThreads = DEFAULT_THREADS;
 
 // Array sizes
@@ -98,7 +99,7 @@ void InitX(double* x);
 void InitU(long N, double* u);
 void InitU2(long N, double* u, long n1);
 long BitReverse(long M, long k);
-void FFT1D(long direction, long M, long N, double* x, double* scratch, double* upriv, double* umain2, long thread_id, long MyFirst, long MyLast, long pad_length, bool test_result, bool dostats);
+void FFT1D(long direction, long M, long N, double* x, double* scratch, double* upriv, double* umain2, long thread_id, long MyFirst, long MyLast, long pad_length, bool test_result);
 void TwiddleOneCol(long direction, long n1, long j, double* u, double* x, long pad_length);
 void Scale(long n1, long N, double* x);
 void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst, long MyLast, long pad_length);
@@ -308,7 +309,7 @@ void ArgumentParser(int argc, char* argv[]) {
                   exit(-1);
                 }
 	        break;  
-      case 's': dostats = true; 
+      case 'y': doprefetch = true; 
 	        break;
       case 't': test_result = true; 
 	        break;
@@ -320,7 +321,8 @@ void ArgumentParser(int argc, char* argv[]) {
                 printf("  -pNumThreads : NumThreads = number of processors; Must be a power of 2.\n");
                 printf("  -nN : N = number of cache lines.\n");
                 printf("  -lL : L = Log base 2 of cache line length in bytes.\n");
-                printf("  -s  : Print individual processor timing statistics.\n");
+		printf("  -y  : Enable touching the data before operations.\n");
+		printf("        It is not useful when measuring the full application or the ROI.\n");
                 printf("  -t  : Perform FFT and inverse FFT.  Test output by comparing the\n");
                 printf("        integral of the original data to the integral of the data that\n");
                 printf("        results from performing the FFT and inverse FFT.\n");
@@ -350,14 +352,16 @@ void ParallelMain() {
   long MyFirst = rootN * thread_id / NumThreads;
   long MyLast = rootN * (thread_id+1) / NumThreads;
 
-  TouchArray(x, trans, umain2, upriv, MyFirst, MyLast);
-
+  if (doprefetch) {
+    TouchArray(x, trans, umain2, upriv, MyFirst, MyLast);
+  }
+  
   /* perform forward FFT */
-  FFT1D(1, M, N, x, trans, upriv, umain2, thread_id, MyFirst, MyLast, pad_length, test_result, dostats);
+  FFT1D(1, M, N, x, trans, upriv, umain2, thread_id, MyFirst, MyLast, pad_length, test_result);
 
   /* perform backward FFT */
   if (test_result) {
-    FFT1D(-1, M, N, x, trans, upriv, umain2, thread_id, MyFirst, MyLast, pad_length, test_result, dostats);
+    FFT1D(-1, M, N, x, trans, upriv, umain2, thread_id, MyFirst, MyLast, pad_length, test_result);
   }  
 }
 
@@ -440,7 +444,7 @@ long BitReverse(long M, long k) {
 }
 
 
-void FFT1D(long direction, long M, long N, double* x, double* scratch, double* upriv, double* umain2, long thread_id, long MyFirst, long MyLast, long pad_length, bool test_result, bool dostats) {
+void FFT1D(long direction, long M, long N, double* x, double* scratch, double* upriv, double* umain2, long thread_id, long MyFirst, long MyLast, long pad_length, bool test_result) {
   long m1 = M/2;
   long n1 = 1<<m1;
 
