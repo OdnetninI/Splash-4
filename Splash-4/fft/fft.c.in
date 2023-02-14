@@ -59,6 +59,21 @@ MAIN_ENV
 
 #define SWAP_VALS(a,b) {double tmp; tmp=a; a=b; b=tmp;}
 
+
+#define CHECK_MALLOC(x) {						\
+    if (x == NULL) {							\
+      fprintf(stderr, "ERROR: Could not malloc memory for "#x"\n");	\
+      exit(-1);								\
+    }									\
+  }
+
+#define CHECK_THREAD_MALLOC(tid,x) {						\
+    if (x == NULL) {								\
+      fprintf(stderr, "ERROR: Thread %ld not malloc memory for "#x"\n", tid);	\
+      exit(-1);									\
+    }										\
+  }
+
 // Global data
 struct GlobalMemory {
   long id;
@@ -163,23 +178,12 @@ int main(int argc, char *argv[]) {
   trans = (double* ) G_MALLOC(2*(N+rootN*pad_length)*sizeof(double)+PAGE_SIZE);
   umain = (double* ) G_MALLOC(2*rootN*sizeof(double));  
   umain2 = (double* ) G_MALLOC(2*(N+rootN*pad_length)*sizeof(double)+PAGE_SIZE);
-  
-  if (Global == NULL) {
-    printerr("Could not malloc memory for Global\n");
-    exit(-1);
-  } else if (x == NULL) {
-    printerr("Could not malloc memory for x\n");
-    exit(-1);
-  } else if (trans == NULL) {
-    printerr("Could not malloc memory for trans\n");
-    exit(-1);
-  } else if (umain == NULL) {
-    printerr("Could not malloc memory for umain\n");
-    exit(-1);
-  } else if (umain2 == NULL) {
-    printerr("Could not malloc memory for umain2\n");
-    exit(-1);
-  }
+
+  CHECK_MALLOC(Global);
+  CHECK_MALLOC(x);
+  CHECK_MALLOC(trans);
+  CHECK_MALLOC(umain);
+  CHECK_MALLOC(umain2);
 
   x = (double* ) (((unsigned long) x) + PAGE_SIZE - ((unsigned long) x) % PAGE_SIZE);
   trans = (double* ) (((unsigned long) trans) + PAGE_SIZE - ((unsigned long) trans) % PAGE_SIZE);
@@ -340,11 +344,9 @@ void ArgumentParser(int argc, char* argv[]) {
 void ParallelMain() {  
   long thread_id = FETCH_ADD(Global->id, 1)
 
-  double* upriv = (double* ) malloc(2*(rootN-1)*sizeof(double));  
-  if (upriv == NULL) {
-    fprintf(stderr,"Proc %ld could not malloc memory for upriv\n",thread_id);
-    exit(-1);
-  }
+  double* upriv = (double* ) malloc(2*(rootN-1)*sizeof(double));
+  CHECK_THREAD_MALLOC(thread_id, upriv);
+  
   for (long i = 0; i < 2 * (rootN-1); i++) {
     upriv[i] = umain[i];
   }   
@@ -526,10 +528,10 @@ void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst,
   blksize = blksize / numblks;
 
   for (long l = thread_id + 1; l < NumThreads; l++) {
-    long v_off = l * row_count;
     for (long k = 0; k < numblks; k++) {
-      long h_off = firstfirst;
+      long v_off = l * row_count + k * blksize;
       for (long m = 0; m < numblks; m++) {
+	long h_off = firstfirst + m * blksize;
         for (long i = 0; i < blksize; i++) {
 	  long v = v_off + i; 
           for (long j = 0; j < blksize; j++) {
@@ -539,9 +541,7 @@ void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst,
             dest[2*(h*n1p+v)+1] = src[2*(v*n1p+h)+1];
           }
         }	
-	h_off += blksize;
       }
-      v_off+=blksize;
     }
   }
 
@@ -550,10 +550,10 @@ void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst,
   }
 
   for (long l = 0; l < thread_id; l++) {
-    long v_off = l * row_count;
     for (long k = 0; k < numblks; k++) {
-      long h_off = firstfirst;
+      long v_off = l * row_count + k * blksize;
       for (long m = 0; m < numblks; m++) {
+	long h_off = firstfirst + m * blksize;
         for (long i = 0; i < blksize; i++) {
 	  long v = v_off + i;
           for (long j = 0; j < blksize; j++) {
@@ -562,16 +562,14 @@ void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst,
             dest[2*(h*n1p+v)+1] = src[2*(v*n1p+h)+1];
           }
         }
-	h_off += blksize;
       }
-      v_off+=blksize;
     }
   }
 
-  long v_off = thread_id*row_count;
   for (long k = 0; k < numblks; k++) {
-    long h_off = firstfirst;
+    long v_off = thread_id * row_count + k * blksize;
     for (long m = 0; m < numblks; m++) {
+      long h_off = firstfirst + m * blksize;
       for (long i = 0; i < blksize; i++) {
         long v = v_off + i;
         for (long j = 0; j < blksize; j++) {
@@ -580,9 +578,7 @@ void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst,
           dest[2*(h*n1p+v)+1] = src[2*(v*n1p+h)+1];
 	}
       }
-      h_off += blksize;
     }
-    v_off+=blksize;
   }
 }
 
