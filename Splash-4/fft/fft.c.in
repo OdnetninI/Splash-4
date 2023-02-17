@@ -130,12 +130,12 @@ long log_2(long number);
 */
 int main(int argc, char *argv[]) {    
   ArgumentParser(argc, argv);
-  long m1 = M/2;
+  long m1 = M >> 1;
 
   MAIN_INITENV(,80000000);
 
-  N = 1<<M;
-  rootN = 1<<(M/2);
+  N = 1 << M;
+  rootN = 1 << (M >> 1);
   long rowsperproc = rootN / NumThreads;
   if (rowsperproc == 0) {
     printerr("Matrix not large enough. 2**(M/2) must be >= NumThreads\n");
@@ -143,41 +143,39 @@ int main(int argc, char *argv[]) {
   }
 
   long line_size = 1 << log2_line_size;
-  if (line_size < 2*sizeof(double)) {
-    printf("WARNING: Each element is a complex double (%ld bytes)\n",2*sizeof(double));
+  if (line_size < (sizeof(double) << 1)) {
+    printf("WARNING: Each element is a complex double (%ld bytes)\n",(sizeof(double) << 1));
     printf("  => Less than one element per cache line\n");
     printf("     Computing transpose blocking factor\n");
-    long factor = (2*sizeof(double)) / line_size;
+    long factor = (sizeof(double) << 1) / line_size;
     num_cache_lines = orig_num_lines / factor;
-  }  
-  if (line_size <= 2*sizeof(double)) {
-    pad_length = 1;
-  } else {
-    pad_length = line_size / (2*sizeof(double));
   }
 
-  if (rowsperproc * rootN * 2 * sizeof(double) >= PAGE_SIZE) {
-    long pages = (2 * pad_length * sizeof(double) * rowsperproc) / PAGE_SIZE;
-    if (pages * PAGE_SIZE != 2 * pad_length * sizeof(double) * rowsperproc) {
+  pad_length = line_size / (sizeof(double) << 1);
+  if (line_size <= (sizeof(double) << 1)) {
+    pad_length = 1;
+  }
+
+  if (rowsperproc * rootN * (sizeof(double) << 1) >= PAGE_SIZE) {
+    long pages = (pad_length * (sizeof(double) << 1) * rowsperproc) / PAGE_SIZE;
+    if (pages * PAGE_SIZE != pad_length * (sizeof(double) << 1) * rowsperproc) {
       pages ++;
     }
-    pad_length = (pages * PAGE_SIZE) / (2 * sizeof(double) * rowsperproc);
+    pad_length = (pages * PAGE_SIZE) / ((sizeof(double) << 1) * rowsperproc);
   } else {
-    pad_length = (PAGE_SIZE - (rowsperproc * rootN * 2 * sizeof(double))) /
-
-                 (2 * sizeof(double) * rowsperproc);
-    if (pad_length * (2 * sizeof(double) * rowsperproc) !=
-        (PAGE_SIZE - (rowsperproc * rootN * 2 * sizeof(double)))) {
+    pad_length = (PAGE_SIZE - (rowsperproc * rootN * (sizeof(double) << 1))) / ((sizeof(double) << 1) * rowsperproc);
+    if (pad_length * ((sizeof(double) << 1) * rowsperproc) !=
+        (PAGE_SIZE - (rowsperproc * rootN * (sizeof(double) << 1)))) {
       printerr("Padding algorithm unsuccessful\n");
       exit(-1);
     }
   }
 
   Global = (struct GlobalMemory *) G_MALLOC(sizeof(struct GlobalMemory));
-  x = (double* ) G_MALLOC(2*(N+rootN*pad_length)*sizeof(double)+PAGE_SIZE);
-  trans = (double* ) G_MALLOC(2*(N+rootN*pad_length)*sizeof(double)+PAGE_SIZE);
-  umain = (double* ) G_MALLOC(2*rootN*sizeof(double));  
-  umain2 = (double* ) G_MALLOC(2*(N+rootN*pad_length)*sizeof(double)+PAGE_SIZE);
+  x = (double* ) G_MALLOC((N+rootN*pad_length)*(sizeof(double) << 1)+PAGE_SIZE);
+  trans = (double* ) G_MALLOC((N+rootN*pad_length)*(sizeof(double) << 1)+PAGE_SIZE);
+  umain = (double* ) G_MALLOC(rootN*(sizeof(double) << 1));  
+  umain2 = (double* ) G_MALLOC((N+rootN*pad_length)*(sizeof(double) << 1)+PAGE_SIZE);
 
   CHECK_MALLOC(Global);
   CHECK_MALLOC(x);
@@ -294,8 +292,8 @@ void ArgumentParser(int argc, char* argv[]) {
                 }
 	        break;  
       case 'm': M = atoi(optarg);
-                long m1 = M/2;
-                if (2*m1 != M) {
+                long m1 = M >> 1;
+                if ((m1 << 1) != M) {
                   printerr("M must be even\n");
                   exit(-1);
                 }
@@ -344,10 +342,10 @@ void ArgumentParser(int argc, char* argv[]) {
 void ParallelMain() {  
   long thread_id = FETCH_ADD(Global->id, 1)
 
-  double* upriv = (double* ) malloc(2*(rootN-1)*sizeof(double));
+    double* upriv = (double* ) malloc((rootN-1) * (sizeof(double) << 1));
   CHECK_THREAD_MALLOC(thread_id, upriv);
   
-  for (long i = 0; i < 2 * (rootN-1); i++) {
+  for (long i = 0; i < ((rootN-1) << 1); i++) {
     upriv[i] = umain[i];
   }   
 
@@ -371,16 +369,16 @@ void ParallelMain() {
 double TouchArray(double* x, double* scratch, double* u, double* upriv, long MyFirst, long MyLast) {
   double tot = 0.0;
   /* touch my data */
-  for (long j = 0; j < 2*(rootN-1); j++) {
+  for (long j = 0; j < ((rootN-1) << 1); j++) {
     tot += upriv[j];
   }
   /* touch global arrays */
   for (long j = MyFirst; j < MyLast; j++) {
     long k = j * (rootN + pad_length);
     for (long i = 0; i < rootN; i++) {
-      tot += x[2*(k+i)] + x[2*(k+i)+1] + 
-             scratch[2*(k+i)] + scratch[2*(k+i)+1] +
-	     u[2*(k+i)] + u[2*(k+i)+1];
+      tot += x[(k+i) << 1] + x[((k+i) << 1)+1] + 
+	     scratch[(k+i) << 1] + scratch[((k+i) << 1)+1] +
+	     u[(k+i) << 1] + u[((k+i) << 1)+1];
     }
   }  
   return tot;
@@ -392,7 +390,7 @@ double CheckSum(double* x) {
   for (long j = 0; j < rootN; j++) {
     long k = j * (rootN + pad_length);
     for (long i = 0; i < rootN; i++) {
-      cks += x[2*(k+i)] + x[2*(k+i)+1];
+      cks += x[(k+i) << 1] + x[((k+i) << 1)+1];
     }
   }
   return cks;
@@ -404,8 +402,8 @@ void InitX(double* x) {
   for (long j = 0; j < rootN; j++) {
     long k = j * (rootN + pad_length);
     for (long i = 0; i < rootN; i++) {
-      x[2*(k+i)] = drand48();
-      x[2*(k+i)+1] = drand48();
+      x[(k+i) << 1] = drand48();
+      x[((k+i) << 1)+1] = drand48();
     }
   }
 }
@@ -417,8 +415,8 @@ void InitU(long N, double* u) {
     long base = n1-1;
     for (long j = 0; j < n1; j++) {
       if (base+j > rootN-1) return;
-      u[2*(base+j)] = cos(2.0*PI*j/(2*n1));
-      u[2*(base+j)+1] = -sin(2.0*PI*j/(2*n1));
+      u[(base+j) << 1] = cos(2.0*PI*j/(n1 << 1));
+      u[((base+j) << 1)+1] = -sin(2.0*PI*j/(n1 << 1));
     }
   }
 }
@@ -428,8 +426,8 @@ void InitU2(long N, double* u, long n1) {
   for (long j = 0; j < n1; j++) {  
     long k = j*(rootN+pad_length);
     for (long i = 0; i < n1; i++) {  
-      u[2*(k+i)] = cos(2.0*PI*i*j/(N));
-      u[2*(k+i)+1] = -sin(2.0*PI*i*j/(N));
+      u[(k+i) << 1] = cos(2.0*PI*i*j/(N));
+      u[((k+i) << 1)+1] = -sin(2.0*PI*i*j/(N));
     }
   }
 }
@@ -439,7 +437,7 @@ long BitReverse(long M, long k) {
   long j = 0;
   long tmp = k;
   for (long i = 0; i < M; i++) {
-    j = 2*j + (tmp&0x1);
+    j = (j << 1) + (tmp&0x1);
     tmp = tmp>>1;
   }
   return j;
@@ -447,8 +445,8 @@ long BitReverse(long M, long k) {
 
 
 void FFT1D(long direction, long M, long N, double* x, double* scratch, double* upriv, double* umain2, long thread_id, long MyFirst, long MyLast, long pad_length, bool test_result) {
-  long m1 = M/2;
-  long n1 = 1<<m1;
+  long m1 = M >> 1;
+  long n1 = 1 << m1;
 
   if(is_output){
     printf("iter_num = %lu\n", MyLast - MyFirst);
@@ -459,8 +457,8 @@ void FFT1D(long direction, long M, long N, double* x, double* scratch, double* u
 
   /* do n1 1D FFTs on columns */
   for (long j = MyFirst; j < MyLast; j++) {
-    FFT1DOnce(direction, m1, n1, upriv, &scratch[2*j*(n1+pad_length)]);
-    TwiddleOneCol(direction, n1, j, umain2, &scratch[2*j*(n1+pad_length)], pad_length);
+    FFT1DOnce(direction, m1, n1, upriv, &scratch[(j << 1)*(n1+pad_length)]);
+    TwiddleOneCol(direction, n1, j, umain2, &scratch[(j << 1)*(n1+pad_length)], pad_length);
   }  
   
   BARRIER(Global->barrier, NumThreads);
@@ -470,9 +468,9 @@ void FFT1D(long direction, long M, long N, double* x, double* scratch, double* u
 
   /* do n1 1D FFTs on columns again */
   for (long j = MyFirst; j < MyLast; j++) {
-    FFT1DOnce(direction, m1, n1, upriv, &x[2*j*(n1+pad_length)]);
+    FFT1DOnce(direction, m1, n1, upriv, &x[(j << 1)*(n1+pad_length)]);
     if (direction == -1)
-      Scale(n1, N, &x[2*j*(n1+pad_length)]);
+      Scale(n1, N, &x[(j << 1)*(n1+pad_length)]);
   }
   
   BARRIER(Global->barrier, NumThreads);
@@ -485,7 +483,7 @@ void FFT1D(long direction, long M, long N, double* x, double* scratch, double* u
     // All threads has finished, and the data can be copied to the output
     BARRIER(Global->barrier, NumThreads);
     for (long j = MyFirst; j < MyLast; j++) {
-      CopyColumn(n1, &scratch[2*j*(n1+pad_length)], &x[2*j*(n1+pad_length)]); 
+      CopyColumn(n1, &scratch[(j << 1)*(n1+pad_length)], &x[(j << 1)*(n1+pad_length)]); 
     }  
   }
 
@@ -496,20 +494,20 @@ void FFT1D(long direction, long M, long N, double* x, double* scratch, double* u
 
 void TwiddleOneCol(long direction, long n1, long j, double* u, double* x, long pad_length) {
   for (long i = 0; i < n1; i++) {
-    double omega_r = u[2*(j*(n1+pad_length)+i)];
-    double omega_c = direction*u[2*(j*(n1+pad_length)+i)+1];  
-    double x_r = x[2*i]; 
-    double x_c = x[2*i+1];
-    x[2*i] = omega_r*x_r - omega_c*x_c;
-    x[2*i+1] = omega_r*x_c + omega_c*x_r;
+    double omega_r = u[(j*(n1+pad_length)+i) << 1];
+    double omega_c = direction*u[((j*(n1+pad_length)+i) << 1)+1];  
+    double x_r = x[i << 1]; 
+    double x_c = x[(i << 1)+1];
+    x[i << 1] = omega_r*x_r - omega_c*x_c;
+    x[(i << 1)+1] = omega_r*x_c + omega_c*x_r;
   }
 }
 
 
 void Scale(long n1, long N, double* x) {
   for (long i = 0; i < n1; i++) {
-    x[2*i] /= N;
-    x[2*i+1] /= N;
+    x[i << 1] /= N;
+    x[(i << 1)+1] /= N;
   }
 }
 
@@ -520,9 +518,9 @@ void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst,
   long row_count = n1 / NumThreads;
   long n1p = n1 + pad_length;
   long blksize = MyLast - MyFirst;
-  long numblks = (2*blksize)/num_cache_lines;
+  long numblks = (blksize << 1)/num_cache_lines;
   
-  if (numblks * num_cache_lines != 2 * blksize) {
+  if (numblks * num_cache_lines != (blksize << 1)) {
     numblks ++;
   }
   blksize = blksize / numblks;
@@ -537,8 +535,8 @@ void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst,
           for (long j = 0; j < blksize; j++) {
             iter_num ++;
 	    long h = h_off + j;
-            dest[2*(h*n1p+v)] = src[2*(v*n1p+h)];
-            dest[2*(h*n1p+v)+1] = src[2*(v*n1p+h)+1];
+            dest[(h*n1p+v) << 1] = src[(v*n1p+h) << 1];
+            dest[((h*n1p+v) << 1)+1] = src[((v*n1p+h) << 1)+1];
           }
         }	
       }
@@ -558,8 +556,8 @@ void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst,
 	  long v = v_off + i;
           for (long j = 0; j < blksize; j++) {
             long h = h_off + j;
-            dest[2*(h*n1p+v)] = src[2*(v*n1p+h)];
-            dest[2*(h*n1p+v)+1] = src[2*(v*n1p+h)+1];
+            dest[(h*n1p+v) << 1] = src[(v*n1p+h) << 1];
+            dest[((h*n1p+v) << 1)+1] = src[((v*n1p+h) << 1)+1];
           }
         }
       }
@@ -574,8 +572,8 @@ void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst,
         long v = v_off + i;
         for (long j = 0; j < blksize; j++) {
           long h = h_off + j;
-          dest[2*(h*n1p+v)] = src[2*(v*n1p+h)];
-          dest[2*(h*n1p+v)+1] = src[2*(v*n1p+h)+1];
+          dest[(h*n1p+v) << 1] = src[(v*n1p+h) << 1];
+          dest[((h*n1p+v) << 1)+1] = src[((v*n1p+h) << 1)+1];
 	}
       }
     }
@@ -585,8 +583,8 @@ void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst,
 
 void CopyColumn(long n1, double* src, double* dest) {
   for (long i = 0; i < n1; i++) {
-    dest[2*i] = src[2*i];
-    dest[2*i+1] = src[2*i+1];
+    dest[i << 1] = src[i << 1];
+    dest[(i << 1)+1] = src[(i << 1)+1];
   }
 }
 
@@ -595,8 +593,8 @@ void Reverse(long N, long M, double* x) {
   for (long k = 0; k < N; k++) {
     long j = BitReverse(M, k);
     if (j > k) {
-      SWAP_VALS(x[2*j], x[2*k]);
-      SWAP_VALS(x[2*j+1], x[2*k+1]);
+      SWAP_VALS(x[j << 1], x[k << 1]);
+      SWAP_VALS(x[(j << 1)+1], x[(k << 1)+1]);
     }
   }
 }
@@ -611,24 +609,24 @@ void FFT1DOnce(long direction, long M, long N, double* u, double* x) {
     long L = 1<<q;
     long r = N/L;
     long Lstar = L/2;
-    double* u1 = &u[2*(Lstar-1)];
+    double* u1 = &u[(Lstar-1) << 1];
     for (long k = 0; k < r; k++) {
-      double* x1 = &x[2*(k*L)];
-      double* x2 = &x[2*(k*L+Lstar)];
+      double* x1 = &x[(k*L) << 1];
+      double* x2 = &x[(k*L+Lstar) << 1];
       for (long j = 0; j < Lstar; j++) {
         iter_num ++;
-	double omega_r = u1[2*j]; 
-        double omega_c = direction*u1[2*j+1];
-	double x_r = x2[2*j]; 
-        double x_c = x2[2*j+1];
+	double omega_r = u1[j << 1]; 
+        double omega_c = direction*u1[(j << 1)+1];
+	double x_r = x2[j << 1]; 
+        double x_c = x2[(j << 1)+1];
 	double tau_r = omega_r*x_r - omega_c*x_c;
 	double tau_c = omega_r*x_c + omega_c*x_r;
-	x_r = x1[2*j]; 
-        x_c = x1[2*j+1];
-	x2[2*j] = x_r - tau_r;
-	x2[2*j+1] = x_c - tau_c;
-	x1[2*j] = x_r + tau_r;
-	x1[2*j+1] = x_c + tau_c;
+	x_r = x1[j << 1]; 
+        x_c = x1[(j << 1)+1];
+	x2[j << 1] = x_r - tau_r;
+	x2[(j << 1)+1] = x_c - tau_c;
+	x1[j << 1] = x_r + tau_r;
+	x1[(j << 1)+1] = x_c + tau_c;
       }
     }
   }
@@ -643,7 +641,7 @@ void PrintArray(long N, double* x) {
   for (long i = 0; i < rootN; i++) {
     long k = i * (rootN+pad_length);
     for (long j = 0; j < rootN; j++) {
-      printf(" %4.2f %4.2f", x[2*(k+j)], x[2*(k+j)+1]);
+      printf(" %4.2f %4.2f", x[(k+j) << 1], x[((k+j) << 1)+1]);
       if (i*rootN+j != N-1) {
         printf(",");
       }
@@ -670,7 +668,7 @@ long log_2(long number) {
   while ((cumulative < number) && (!done) && (out < 50)) {
     if (cumulative == number) done = true;
     else {
-      cumulative = cumulative * 2;
+      cumulative = cumulative << 1;
       out ++;
     }
   }
