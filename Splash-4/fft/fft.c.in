@@ -59,6 +59,12 @@ MAIN_ENV
 
 #define SWAP_VALS(a,b) {double tmp; tmp=a; a=b; b=tmp;}
 
+#define IF_EXIT(c, msg) {			\
+    if (c) {					\
+      fprintf(stderr, msg);			\
+      exit(-1);					\
+    }						\
+  }						\
 
 #define CHECK_MALLOC(x) {						\
     if (x == NULL) {							\
@@ -137,10 +143,7 @@ int main(int argc, char *argv[]) {
   N = 1 << M;
   rootN = 1 << (M >> 1);
   long rowsperproc = rootN / NumThreads;
-  if (rowsperproc == 0) {
-    printerr("Matrix not large enough. 2**(M/2) must be >= NumThreads\n");
-    exit(-1);
-  }
+  IF_EXIT(rowsperproc == 0, "Matrix not large enough. 2**(M/2) must be >= NumThreads\n");
 
   long line_size = 1 << log2_line_size;
   if (line_size < (sizeof(double) << 1)) {
@@ -162,13 +165,12 @@ int main(int argc, char *argv[]) {
       pages ++;
     }
     pad_length = (pages * PAGE_SIZE) / ((sizeof(double) << 1) * rowsperproc);
-  } else {
+  }
+  else {
     pad_length = (PAGE_SIZE - (rowsperproc * rootN * (sizeof(double) << 1))) / ((sizeof(double) << 1) * rowsperproc);
-    if (pad_length * ((sizeof(double) << 1) * rowsperproc) !=
-        (PAGE_SIZE - (rowsperproc * rootN * (sizeof(double) << 1)))) {
-      printerr("Padding algorithm unsuccessful\n");
-      exit(-1);
-    }
+    IF_EXIT(pad_length * ((sizeof(double) << 1) * rowsperproc) !=
+	    (PAGE_SIZE - (rowsperproc * rootN * (sizeof(double) << 1))),
+	    "Padding algorithm unsuccessful\n");
   }
 
   Global = (struct GlobalMemory *) G_MALLOC(sizeof(struct GlobalMemory));
@@ -252,11 +254,7 @@ int main(int argc, char *argv[]) {
 
   // Clossing and printing
   if (doprint) {
-    if (test_result) {
-      printf("Data values after inverse FFT:\n");
-    } else {
-      printf("Data values after FFT:\n");
-    }
+    printf("Data values after%s FFT:\n", test_result ? " inverse" : "");
     PrintArray(N, x);
   }
 
@@ -281,59 +279,52 @@ void ArgumentParser(int argc, char* argv[]) {
   
   while ((c = getopt(argc, argv, "p:m:n:l:stoh")) != -1) {
     switch(c) {
-      case 'p': NumThreads = atoi(optarg); 
-                if (NumThreads < 1) {
-                  printerr("NumThreads must be >= 1\n");
-                  exit(-1);
-                }
-                if (log_2(NumThreads) == -1) {
-                  printerr("NumThreads must be a power of 2\n");
-                  exit(-1);
-                }
-	        break;  
-      case 'm': M = atoi(optarg);
-                long m1 = M >> 1;
-                if ((m1 << 1) != M) {
-                  printerr("M must be even\n");
-                  exit(-1);
-                }
-	        break;  
-      case 'n': num_cache_lines = atoi(optarg); 
-                orig_num_lines = num_cache_lines;
-                if (num_cache_lines < 1) {
-                  printerr("Number of cache lines must be >= 1\n");
-                  exit(-1);
-                }
-	        break;  
-      case 'l': log2_line_size = atoi(optarg); 
-                if (log2_line_size < 0) {
-                  printerr("Log base 2 of cache line length in bytes must be >= 0\n");
-                  exit(-1);
-                }
-	        break;  
-      case 'y': doprefetch = true; 
-	        break;
-      case 't': test_result = true; 
-	        break;
-      case 'o': doprint = true; 
-	        break;
-      case 'h': printf("Usage: FFT <options>\n\n");
-                printf("options:\n");
-                printf("  -mM : M = even integer; 2**M total complex data points transformed.\n");
-                printf("  -pNumThreads : NumThreads = number of processors; Must be a power of 2.\n");
-                printf("  -nN : N = number of cache lines.\n");
-                printf("  -lL : L = Log base 2 of cache line length in bytes.\n");
-		printf("  -y  : Enable touching the data before operations.\n");
-		printf("        It is not useful when measuring the full application or the ROI.\n");
-                printf("  -t  : Perform FFT and inverse FFT.  Test output by comparing the\n");
-                printf("        integral of the original data to the integral of the data that\n");
-                printf("        results from performing the FFT and inverse FFT.\n");
-                printf("  -o  : Print out complex data points.\n");
-                printf("  -h  : Print out command line options.\n\n");
-                printf("Default: FFT -m%1d -p%1d -n%1d -l%1d\n",
-                       DEFAULT_M,DEFAULT_THREADS,NUM_CACHE_LINES,LOG2_LINE_SIZE);
-		exit(0);
-	        break;
+      case 'p':
+	NumThreads = atoi(optarg);
+	IF_EXIT(NumThreads < 1, "NumThreads must be >= 1\n");
+	IF_EXIT(log_2(NumThreads) == -1, "NumThreads must be a power of 2\n");
+	break;  
+      case 'm':
+	M = atoi(optarg);
+	long m1 = M >> 1;
+	IF_EXIT((m1 << 1) != M, "M must be even\n");
+	break;  
+      case 'n':
+	num_cache_lines = atoi(optarg); 
+	orig_num_lines = num_cache_lines;
+	IF_EXIT(num_cache_lines < 1, "Number of cache lines must be >= 1\n")
+	break;  
+      case 'l':
+	log2_line_size = atoi(optarg); 
+	IF_EXIT(log2_line_size < 0, "Log base 2 of cache line length in bytes must be >= 0\n");
+	break;  
+      case 'y':
+	doprefetch = true; 
+	break;
+      case 't':
+	test_result = true; 
+	break;
+      case 'o':
+	doprint = true; 
+	break;
+      case 'h':
+	printf("Usage: FFT <options>\n\n");
+	printf("options:\n");
+	printf("  -mM : M = even integer; 2**M total complex data points transformed.\n");
+	printf("  -pNumThreads : NumThreads = number of processors; Must be a power of 2.\n");
+	printf("  -nN : N = number of cache lines.\n");
+	printf("  -lL : L = Log base 2 of cache line length in bytes.\n");
+	printf("  -y  : Enable touching the data before operations.\n");
+	printf("        It is not useful when measuring the full application or the ROI.\n");
+	printf("  -t  : Perform FFT and inverse FFT.  Test output by comparing the\n");
+	printf("        integral of the original data to the integral of the data that\n");
+	printf("        results from performing the FFT and inverse FFT.\n");
+	printf("  -o  : Print out complex data points.\n");
+	printf("  -h  : Print out command line options.\n\n");
+	printf("Default: FFT -m%1d -p%1d -n%1d -l%1d\n",
+	       DEFAULT_M,DEFAULT_THREADS,NUM_CACHE_LINES,LOG2_LINE_SIZE);
+	exit(0);
+	break;
     }
   }
 }
