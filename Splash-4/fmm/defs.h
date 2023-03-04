@@ -17,6 +17,10 @@
 #ifndef _Defs_H
 #define _Defs_H 1
 
+#pragma once
+
+#include "../common/common.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>

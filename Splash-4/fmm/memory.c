@@ -13,25 +13,48 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#include "../common/common.h"
 
-#ifndef _Partition_H
-#define _Partition_H 1
-
+#include <float.h>
 #include "defs.h"
-#include "box.h"
+#include "memory.h"
 
-/* Void function type */
-typedef void (*partition_function)(long my_id, box *b);
+MAIN_ENV();
 
-typedef enum { TOP, BOTTOM, CHILDREN } partition_start;
-typedef enum { ORB, COST_ZONES } partition_alg;
+g_mem *G_Memory;
+local_memory Local[MAX_PROCS];
 
-extern void InitPartition(long my_id);
-extern void PartitionIterate(long my_id, partition_function function,
-			     partition_start position);
-extern void InsertBoxInPartition(long my_id, box *b);
-extern void RemoveBoxFromPartition(long my_id, box *b);
-extern void ComputeCostOfBox(box *b);
-extern void CheckPartition(long my_id);
+/*
+ *  InitGlobalMemory ()
+ *
+ *  Args : none.
+ *
+ *  Returns : nothing.
+ *
+ *  Side Effects : Allocates all the global storage for G_Memory.
+ *
+ */
+void
+InitGlobalMemory ()
+{
+   G_Memory = (g_mem *) G_MALLOC(sizeof(g_mem));
+   if (G_Memory == NULL) {
+      printf("Ran out of global memory in InitGlobalMemory\n");
+      exit(-1);
+   }
+   G_Memory->count = 0;
+   G_Memory->id = 0;
+   LOCKINIT(G_Memory->io_lock);
+   LOCKINIT(G_Memory->mal_lock);
+   LOCKINIT(G_Memory->single_lock);
+   LOCKINIT(G_Memory->count_lock);
+   ALOCKINIT(G_Memory->lock_array, MAX_LOCKS);
+   BARINIT(G_Memory->synch, Number_Of_Processors);
+   
+   G_Memory->max_x = -MAX_REAL;
+   G_Memory->min_x = MAX_REAL;
+   G_Memory->max_y = -MAX_REAL;
+   G_Memory->min_y = MAX_REAL;
+}
 
-#endif /* _Partition_H */
+

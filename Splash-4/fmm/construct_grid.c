@@ -13,6 +13,7 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#include "../common/common.h"
 
 #include <stdio.h>
 #include <float.h>

@@ -14,46 +14,21 @@
 /*                                                                       */
 /*************************************************************************/
 
-#include <float.h>
-#include "defs.h"
-#include "memory.h"
+#ifndef _Expansions_H
+#define _Expansions_H 1
 
-MAIN_ENV
+#pragma once
 
-g_mem *G_Memory;
-local_memory Local[MAX_PROCS];
+#include "../common/common.h"
 
-/*
- *  InitGlobalMemory ()
- *
- *  Args : none.
- *
- *  Returns : nothing.
- *
- *  Side Effects : Allocates all the global storage for G_Memory.
- *
- */
-void
-InitGlobalMemory ()
-{
-   G_Memory = (g_mem *) G_MALLOC(sizeof(g_mem));
-   if (G_Memory == NULL) {
-      printf("Ran out of global memory in InitGlobalMemory\n");
-      exit(-1);
-   }
-   G_Memory->count = 0;
-   G_Memory->id = 0;
-   LOCKINIT(G_Memory->io_lock);
-   LOCKINIT(G_Memory->mal_lock);
-   LOCKINIT(G_Memory->single_lock);
-   LOCKINIT(G_Memory->count_lock);
-   ALOCKINIT(G_Memory->lock_array, MAX_LOCKS);
-   BARINIT(G_Memory->synch, Number_Of_Processors);
-   
-   G_Memory->max_x = -MAX_REAL;
-   G_Memory->min_x = MAX_REAL;
-   G_Memory->max_y = -MAX_REAL;
-   G_Memory->min_y = MAX_REAL;
-}
+#include "box.h"
 
+extern void InitExpTables(void);
+extern void PrintExpTables(void);
+extern void UpwardPass(long my_id, box *b);
+extern void ComputeInteractions(long my_id, box *b);
+extern void DownwardPass(long my_id, box *b);
+extern void ComputeParticlePositions(long my_id, box *b);
+
+#endif /* _Interactions_H */
 

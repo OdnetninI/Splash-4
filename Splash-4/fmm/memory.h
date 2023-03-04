@@ -17,6 +17,10 @@
 #ifndef _Memory_H
 #define _Memory_H 1
 
+#pragma once
+
+#include "../common/common.h"
+
 #include <pthread.h>
 #include "defs.h"
 #include "particle.h"
@@ -24,7 +28,7 @@
 
 #define MAX_LOCKS 2048
 
-EXTERN_ENV
+EXTERN_ENV();
 
 typedef struct _G_Mem g_mem;
 

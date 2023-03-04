@@ -17,6 +17,10 @@
 #ifndef _Construct_Grid_H
 #define _Construct_Grid_H 1
 
+#pragma once
+
+#include "../common/common.h"
+
 extern void ConstructGrid(long my_id, time_info *local_time, long time_all);
 extern void ConstructLists(long my_id, time_info *local_time, long time_all);
 extern void DestroyGrid(long my_id, time_info *local_time, long time_all);

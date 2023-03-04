@@ -14,9 +14,28 @@
 /*                                                                       */
 /*************************************************************************/
 
-#ifndef _Cost_Zones_H
-#define _Cost_Zones_H 1
+#ifndef _Partition_H
+#define _Partition_H 1
 
-extern void CostZones(long my_id);
+#pragma once
 
-#endif /* _Cost_Zones_H */
+#include "../common/common.h"
+
+#include "defs.h"
+#include "box.h"
+
+/* Void function type */
+typedef void (*partition_function)(long my_id, box *b);
+
+typedef enum { TOP, BOTTOM, CHILDREN } partition_start;
+typedef enum { ORB, COST_ZONES } partition_alg;
+
+extern void InitPartition(long my_id);
+extern void PartitionIterate(long my_id, partition_function function,
+			     partition_start position);
+extern void InsertBoxInPartition(long my_id, box *b);
+extern void RemoveBoxFromPartition(long my_id, box *b);
+extern void ComputeCostOfBox(box *b);
+extern void CheckPartition(long my_id);
+
+#endif /* _Partition_H */

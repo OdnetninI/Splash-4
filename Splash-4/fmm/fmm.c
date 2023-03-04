@@ -66,6 +66,8 @@
 
  */
 
+#include "../common/common.h"
+
 #include <stdio.h>
 #include <math.h>
 #include <errno.h>
@@ -151,7 +153,7 @@ main (int argc, char *argv[])
    if (do_output) {
      PrintAllParticles();
    }
-   MAIN_END;
+   MAIN_END();
 }
 
 
@@ -168,13 +170,8 @@ ParallelExecute ()
 
    local_time = (time_info *) malloc(sizeof(struct _Time_Info) * MAX_TIME_STEPS);
    BARRIER(G_Memory->synch, Number_Of_Processors)
-/*
-   LOCK(G_Memory->count_lock);
-     my_id = G_Memory->id;
-     G_Memory->id++;
-   UNLOCK(G_Memory->count_lock);
-*/
-     my_id = FETCH_ADD(G_Memory->id,1)
+
+     my_id = FETCH_ADD(G_Memory->id,1);
 /* POSSIBLE ENHANCEMENT:  Here is where one might pin processes to
    processors to avoid migration */
 

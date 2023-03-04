@@ -13,15 +13,15 @@ memory.c: memory.h
 particle.c: particle.h
 partition_grid.c: partition_grid.h
 
-fmm.o: fmm.c.in defs.h memory.h particle.h box.h partition_grid.h cost_zones.h construct_grid.h interactions.h
-interactions.o: interactions.c.in defs.h memory.h particle.h box.h partition_grid.h interactions.h
-shell.o: shell.c.in defs.h memory.h particle.h box.h partition_grid.h interactions.h
-construct_grid.o: construct_grid.c.in defs.h memory.h particle.h box.h partition_grid.h construct_grid.h
-cost_zones.o: cost_zones.c.in defs.h memory.h box.h partition_grid.h cost_zones.h
+fmm.o: defs.h memory.h particle.h box.h partition_grid.h cost_zones.h construct_grid.h interactions.h
+interactions.o: defs.h memory.h particle.h box.h partition_grid.h interactions.h
+shell.o: defs.h memory.h particle.h box.h partition_grid.h interactions.h
+construct_grid.o: defs.h memory.h particle.h box.h partition_grid.h construct_grid.h
+cost_zones.o: defs.h memory.h box.h partition_grid.h cost_zones.h
 #orb.o: orb.c.in defs.h memory.h box.h partition_grid.h orb.h
-partition_grid.o: partition_grid.c.in defs.h memory.h box.h partition_grid.h
-box.o: box.c.in defs.h memory.h particle.h box.h
-particle.o: particle.c.in defs.h memory.h particle.h
-memory.o: memory.c.in defs.h memory.h
-defs.o: defs.c.in defs.h memory.h
+partition_grid.o: defs.h memory.h box.h partition_grid.h
+box.o: defs.h memory.h particle.h box.h
+particle.o: defs.h memory.h particle.h
+memory.o: defs.h memory.h
+defs.o: defs.h memory.h
 memory.h: defs.h particle.h box.h

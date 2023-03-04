@@ -13,6 +13,7 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#include "../common/common.h"
 
 #include "defs.h"
 #include "memory.h"

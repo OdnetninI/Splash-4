@@ -17,6 +17,10 @@
 #ifndef _Box_H
 #define _Box_H 1
 
+#pragma once
+
+#include "../common/common.h"
+
 #include "defs.h"
 #include "particle.h"
 

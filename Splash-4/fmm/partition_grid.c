@@ -13,6 +13,7 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#include "../common/common.h"
 
 #include <math.h>
 #include <limits.h>

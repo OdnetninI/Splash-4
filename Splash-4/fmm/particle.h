@@ -17,6 +17,10 @@
 #ifndef _Particle_H
 #define _Particle_H 1
 
+#pragma once
+
+#include "../common/common.h"
+
 #include "defs.h"
 
 typedef struct _Particle particle;
