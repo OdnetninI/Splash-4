@@ -45,7 +45,9 @@
 #include <unistd.h>
 #include <stdbool.h>
 
-MAIN_ENV
+#include "../common/common.h"
+
+MAIN_ENV();
 
 #define MAXRAND                         32767.0
 #define DEFAULT_N                         512
@@ -156,7 +158,7 @@ int main(int argc, char *argv[]) {
   }
   
   for (long i = 0; i < NumThreads; i++) {
-    last_malloc[i] = (double *) G_MALLOC(proc_bytes[i] + PAGE_SIZE)
+    last_malloc[i] = (double *) G_MALLOC(proc_bytes[i] + PAGE_SIZE);
     if (last_malloc[i] == NULL) {
       fprintf(stderr,"Could not malloc memory blocks for proc %ld\n",i);
       exit(-1);
@@ -250,7 +252,7 @@ int main(int argc, char *argv[]) {
     CheckResult(n, a, rhs);
   }
 
-  MAIN_END;
+  MAIN_END();
 }
 
 void ArgumentParser(int argc, char* argv[]) {
@@ -286,7 +288,7 @@ void ArgumentParser(int argc, char* argv[]) {
 
 
 void ParallelMain() {
-  long thread_id = FETCH_ADD(Global->id, 1)
+  long thread_id = FETCH_ADD(Global->id, 1);
   OneSolve(n, block_size, thread_id);
 }
 
