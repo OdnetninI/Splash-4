@@ -13,39 +13,25 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __SPLIT_H__
+#define __SPLIT_H__
 
-EXTERN_ENV
-#include "math.h"
-#include "mdvar.h"
-#include "parameters.h"
-#include "mddata.h"
-#include "split.h"
-#include "global.h"
+#pragma once
+  /* some constant definitions */
+  
+#define H1 0
+#define O  1
+#define H2 2
+#define XDIR 0
+#define YDIR 1
+#define ZDIR 2
+#define DISP 0
+#define VEL 1
+#define ACC 2
+#define DER_3 3
+#define DER_4 4
+#define DER_5 5
+#define DER_6 6
+#define FORCES 7
 
-  /* this routine computes kinetic energy in each of the three spatial
-     dimensions, and puts the computed values in the SUM array */
-void KINETI(double *SUM, double HMAS, double OMAS, long ProcID)
-{
-    long dir, mol;
-    double S;
-
-    /* loop over the three directions */
-    for (dir = XDIR; dir <= ZDIR; dir++) {
-        S=0.0;
-        /* loop over the molecules */
-        for (mol = StartMol[ProcID]; mol < StartMol[ProcID+1]; mol++) {
-            double *tempptr = VAR[mol].F[VEL][dir];
-            S += ( tempptr[H1] * tempptr[H1] +
-                  tempptr[H2] * tempptr[H2] ) * HMAS
-                      + (tempptr[O] * tempptr[O]) * OMAS;
-        }
-/*
-        LOCK(gl->KinetiSumLock);
-        SUM[dir]+=S;
-        UNLOCK(gl->KinetiSumLock);
-*/
-	FETCH_ADD_DOUBLE(&(SUM[dir]), S);
-	
-    } /* for */
-} /* end of subroutine KINETI */
-
+#endif /* __SPLIT_H__ */

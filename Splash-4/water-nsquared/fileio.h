@@ -13,13 +13,14 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __FILEIO_H__
+#define __FILEIO_H__
 
-  /* some variable declarations and some macro definitions */
+#pragma once
 
-extern double OMAS,HMAS,WTMOL,ROH,ANGLE,FHM,FOM,ROHI,ROHI2;
-extern long NATOMS;
-#define max(a,b) ( (a) < (b) ) ? b : a
-#define min(a,b) ( (a) > (b) ) ? b : a
-#define ONE ((double) 1)
-#define TWO ((double) 2)
-#define FIVE ((double) 5)
+  /* sets up files for i/o to match the device numbers used
+  in the original FORTRAN program from the PERFECT Club */
+
+extern FILE *six;
+
+#endif /* __FILEIO_H__ */

@@ -42,8 +42,10 @@
     to control the number of boxes created for small problems
     (and not have fewer boxes than processors).
     */
+#include "../common/common.h"
 
-MAIN_ENV
+MAIN_ENV();
+
 #include <stdio.h>
 #include <string.h>
 #include "split.h"
@@ -150,7 +152,7 @@ int main(int argc, char **argv)
             bound later in mdmain().
             */
 
-        MAIN_INITENV(,70000000,);  /* macro call to initialize
+        MAIN_INITENV(,70000000);  /* macro call to initialize
                                       shared memory etc. */
 
         /* allocate space for main (VAR) data structure as well as
@@ -267,7 +269,7 @@ int main(int argc, char **argv)
 
     printf("\nExited Happily with XTT = %g (note: XTT value is garbage if NPRINT > NSTEP)\n", XTT);
 
-    MAIN_END;
+    MAIN_END();
 } /* main.c */
 
 void WorkStart() /* routine that each created process starts at;
@@ -275,12 +277,8 @@ void WorkStart() /* routine that each created process starts at;
 {
     long ProcID;
     double LocalXTT;
-/*
-    LOCK(gl->IndexLock);
-    ProcID = gl->Index++;
-    UNLOCK(gl->IndexLock);
-*/
-	ProcID = FETCH_ADD(gl->Index, 1)
+
+    ProcID = FETCH_ADD(gl->Index, 1);
 	
     ProcID = ProcID % NumProcs;
 

@@ -13,9 +13,38 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#include "../common/common.h"
 
-  /*  This file contains declarations for some variables
-  needed for force calculation that are initialized in the program and
-  then never modified */
+EXTERN_ENV();
+#include "mdvar.h"
+#include "parameters.h"
+#include "mddata.h"
+#include "split.h"
+#include "global.h"
 
-extern double FC11,FC12,FC13,FC33,FC111,FC333,FC112,FC113,FC123,FC133,FC1111,FC3333,FC1112,FC1122,FC1113,FC1123,FC1133,FC1233,FC1333;
+/* this routine puts the molecules back inside the box if they are out */
+void BNDRY(long ProcID)
+{
+    long mol, dir;
+    double *extra_p;
+
+    /* for each molecule */
+    for (mol = StartMol[ProcID]; mol < StartMol[ProcID+1]; mol++) {
+        /* for each direction */
+        for ( dir = XDIR; dir <= ZDIR; dir++ ) {
+            extra_p = VAR[mol].F[DISP][dir];
+            /* if the oxygen atom is out of the box */
+            if (extra_p[O] > BOXL) {
+                /* move all three atoms back in the box */
+                extra_p[H1] -= BOXL;
+                extra_p[O]  -= BOXL;
+                extra_p[H2] -= BOXL;
+            }
+            else if (extra_p[O] < 0.00) {
+                extra_p[H1] += BOXL;
+                extra_p[O]  += BOXL;
+                extra_p[H2] += BOXL;
+            }
+        } /* for dir */
+    } /* for mol */
+} /* end of subroutine BNDRY */

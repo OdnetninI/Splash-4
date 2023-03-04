@@ -13,10 +13,41 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#include "../common/common.h"
 
+EXTERN_ENV();
 
-  /* sets up files for i/o to match the device numbers used
-  in the original FORTRAN program from the PERFECT Club */
+#include "math.h"
+#include "mdvar.h"
+#include "parameters.h"
+#include "mddata.h"
+#include "split.h"
+#include "global.h"
 
-extern FILE *six;
+  /* this routine computes kinetic energy in each of the three spatial
+     dimensions, and puts the computed values in the SUM array */
+void KINETI(double *SUM, double HMAS, double OMAS, long ProcID)
+{
+    long dir, mol;
+    double S;
+
+    /* loop over the three directions */
+    for (dir = XDIR; dir <= ZDIR; dir++) {
+        S=0.0;
+        /* loop over the molecules */
+        for (mol = StartMol[ProcID]; mol < StartMol[ProcID+1]; mol++) {
+            double *tempptr = VAR[mol].F[VEL][dir];
+            S += ( tempptr[H1] * tempptr[H1] +
+                  tempptr[H2] * tempptr[H2] ) * HMAS
+                      + (tempptr[O] * tempptr[O]) * OMAS;
+        }
+/*
+        LOCK(gl->KinetiSumLock);
+        SUM[dir]+=S;
+        UNLOCK(gl->KinetiSumLock);
+*/
+	FETCH_ADD_DOUBLE(&(SUM[dir]), S);
+	
+    } /* for */
+} /* end of subroutine KINETI */
 

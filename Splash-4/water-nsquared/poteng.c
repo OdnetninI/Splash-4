@@ -13,8 +13,10 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#include "../common/common.h"
 
-EXTERN_ENV
+EXTERN_ENV();
+
 #include "mdvar.h"
 #include "frcnst.h"
 #include "water.h"

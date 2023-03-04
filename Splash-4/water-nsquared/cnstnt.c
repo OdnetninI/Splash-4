@@ -13,8 +13,10 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#include "../common/common.h"
 
-EXTERN_ENV
+EXTERN_ENV();
+
 #include <stdio.h>
 #include "water.h"
 #include "wwpot.h"

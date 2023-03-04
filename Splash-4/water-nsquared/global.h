@@ -13,6 +13,12 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __GLOBAL_H__
+#define __GLOBAL_H__
+
+#pragma once
+
+#include "../common/common.h"
 
 /*  This file contains the declaration of the GlobalMemory
 structure and the maximum number of molecules allowed
@@ -84,3 +90,5 @@ void SYSCNS(void);
 
 /* water.C */
 void WorkStart(void);
+
+#endif /* __GLOBAL_H__ */

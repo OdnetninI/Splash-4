@@ -13,8 +13,10 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#include "../common/common.h"
 
-EXTERN_ENV
+EXTERN_ENV();
+
 #include "math.h"
 #include "stdio.h"
 #include "mdvar.h"

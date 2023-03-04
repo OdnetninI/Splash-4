@@ -13,6 +13,10 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __MDDATA_H__
+#define __MDDATA_H__
+
+#pragma once
 
   /* this file contains the declarations of the main data
   structure types used by the program */
@@ -52,3 +56,5 @@ extern double  TLC[100], FPOT, FKIN;
 extern long StartMol[MAXPROCS+1];
 extern long MolsPerProc;
 extern long NumProcs;
+
+#endif /* __MDDATA_H__ */

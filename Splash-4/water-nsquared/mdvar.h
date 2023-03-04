@@ -13,8 +13,13 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __MDVAR_H__
+#define __MDVAR_H__
 
+#pragma once
   /* some variable declarations */
 
 extern double  TEMP,RHO,TSTEP,BOXL,BOXH,CUTOFF,CUT2;
 extern long    NMOL,NORDER,NATMO,NATMO3,NMOL1;
+
+#endif /* __MDVAR_H__ */

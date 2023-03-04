@@ -13,8 +13,16 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __PARAMETERS_H__
+#define __PARAMETERS_H__
 
-  /* variable declarations needed for random numbers */
+#pragma once
+  /* contains the definitions of certain system constants */
+  
+#define MAXODR 7                    /* Order of predictor-corrector method + 1 */
+#define NATOM 3                     /* Atoms per molecule, H-O-H */ 
+#define MXOD2 (MAXODR+2)            /* Variables maintained per mol */
+#define NDIR 3                      /* Number of spatial directions */
 
-extern double R3[128],R1;
-extern long I2;
+
+#endif /* __PARAMETERS_H__ */
