@@ -493,6 +493,7 @@ cellptr makecell(long ProcessId)
    c->seqnum = ProcessId*maxmycell+Mycell;
    Type(c) = CELL;
    Done(c) = FALSE;
+   CONDVARINIT(Done_cv(c));
    Mass(c) = 0.0;
    for (i = 0; i < NSUB; i++) {
       Subp(c)[i] = NULL;
@@ -519,6 +520,7 @@ leafptr makeleaf(long ProcessId)
    le->seqnum = ProcessId * maxmyleaf + Myleaf;
    Type(le) = LEAF;
    Done(le) = FALSE;
+   CONDVARINIT(Done_cv(le));
    Mass(le) = 0.0;
    le->num_bodies = 0;
    for (i = 0; i < MAX_BODIES_PER_LEAF; i++) {
