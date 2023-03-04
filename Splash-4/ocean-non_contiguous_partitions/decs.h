@@ -16,6 +16,8 @@
 #ifndef __DECS_H__
 #define __DECS_H__
 
+#pragma once
+
 #include "../common/common.h"
 
 #define INPROCS      1024
