@@ -16,8 +16,9 @@
 
 /* Does the arakawa jacobian calculation (of the x and y matrices,
    putting the results in the z matrix) for a subblock. */
+#include "../common/common.h"
 
-EXTERN_ENV
+EXTERN_ENV();
 
 #include <stdio.h>
 #include <math.h>

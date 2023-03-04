@@ -3,7 +3,6 @@ OBJS = jacobcalc.o jacobcalc2.o laplacalc.o linkup.o main.o multi.o slave1.o sla
 
 include ../../Makefile.config
 
-decs.h: decs.h.in
 jacobcalc.c: decs.h
 linkup.c: decs.h
 slave1.c: decs.h

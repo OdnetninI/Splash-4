@@ -17,8 +17,9 @@
 /*    ****************
       subroutine slave2
       ****************  */
+#include "../common/common.h"
 
-EXTERN_ENV
+EXTERN_ENV();
 
 #include <stdio.h>
 #include <math.h>

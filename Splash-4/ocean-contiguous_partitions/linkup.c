@@ -17,7 +17,9 @@
 /* Set all the pointers to the proper locations for the q_multi and
    rhs_multi data structures */
 
-EXTERN_ENV
+#include "../common/common.h"
+
+EXTERN_ENV();
 
 #include "decs.h"
 

@@ -15,8 +15,9 @@
 /*************************************************************************/
 
 /* Performs the laplacian calculation for a subblock */
+#include "../common/common.h"
 
-EXTERN_ENV
+EXTERN_ENV();
 
 #include <stdio.h>
 #include <math.h>

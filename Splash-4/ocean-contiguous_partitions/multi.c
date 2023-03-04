@@ -18,8 +18,9 @@
    Implementation uses red-black gauss-seidel relaxation
    iterations, w cycles, and the method of half-injection for
    residual computation. */
+#include "../common/common.h"
 
-EXTERN_ENV
+EXTERN_ENV();
 
 #include <stdio.h>
 #include <math.h>

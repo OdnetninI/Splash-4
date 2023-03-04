@@ -13,6 +13,12 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __DECS_H__
+#define __DECS_H__
+
+#pragma once
+
+#include "../common/common.h"
 
 #define MASTER            0
 #define RED_ITER          0
@@ -222,3 +228,5 @@ void slave2(long procid, long firstrow, long lastrow, long numrows, long firstco
  * subblock.C
  */
 void subblock(void);
+
+#endif /* __DECS_H__ */

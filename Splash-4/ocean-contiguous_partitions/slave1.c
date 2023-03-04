@@ -17,8 +17,9 @@
 /*    ****************
       subroutine slave
       ****************  */
+#include "../common/common.h"
 
-EXTERN_ENV
+EXTERN_ENV();
 
 #include <stdio.h>
 #include <math.h>
@@ -74,16 +75,10 @@ void slave()
    double *t1d;
 
    ressqr = lev_res[numlev-1] * lev_res[numlev-1];
-/*
-   LOCK(locks->idlock)
-     procid = global->id;
-     global->id = global->id+1;
-   UNLOCK(locks->idlock) 
-*/
 
-	procid = FETCH_ADD(global->id, 1)
-	
-   BARRIER(bars->sl_prini,nprocs)
+   procid = FETCH_ADD(global->id, 1);
+   
+   BARRIER(bars->sl_prini,nprocs);
 
 /* POSSIBLE ENHANCEMENT:  Here is where one might pin processes to
    processors to avoid migration. */
