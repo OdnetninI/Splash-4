@@ -11,9 +11,7 @@ Splash-4 is a benchmark suite based on Splash-3 but with emphasis in atomic inst
 Splash-4 does not require any special installation step.
 
 In order to build Splash-4, a relatively modern C compiler with C11 support is
-required. In addition, the M4 macro processor is necessary for generating the
-source files in the first place. On Ubuntu and similar systems, you can install
-the `m4` and `ivtools-dev` packages.
+required.
 
 Some benchmarks expect their inputs to be at very specific paths relative to the
 working directory, so it is recommended to change the working directory to the
