@@ -40,7 +40,9 @@
 #include <math.h>
 #include <stdlib.h>
 #include <unistd.h>
-MAIN_ENV
+#include "../common/common.h"
+
+MAIN_ENV();
 
 #define MAXRAND					32767.0
 #define DEFAULT_N				128
@@ -139,7 +141,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  MAIN_INITENV(,150000000)
+  MAIN_INITENV(,150000000);
 
   printf("\n");
   printf("Blocked Dense LU Factorization\n");
@@ -315,23 +317,11 @@ int main(int argc, char *argv[])
     CheckResult(n, a, rhs);
   }
 
-  MAIN_END;
+  MAIN_END();
 }
 
-void SlaveStart()
-{
-  long MyNum;
-/*
-  LOCK(Global->idlock)
-    MyNum = Global->id;
-    Global->id ++;
-  UNLOCK(Global->idlock)
-*/
-	MyNum = FETCH_ADD(Global->id, 1)
-
-/* POSSIBLE ENHANCEMENT:  Here is where one might pin processes to
-   processors to avoid migration */
-
+void SlaveStart() {
+  long MyNum = FETCH_ADD(Global->id, 1);
   OneSolve(n, block_size, MyNum, dostats);
 }
 
