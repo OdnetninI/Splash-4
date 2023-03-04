@@ -1,6 +1,8 @@
 #ifndef _CODE_IO_H_
 #define _CODE_IO_H_
 
+#pragma once
+
 void inputdata(void);
 void initoutput(void);
 void output(long ProcessId);

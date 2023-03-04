@@ -24,21 +24,21 @@
 #define CONDVARINIT(condvar) pthread_cond_init(&(condvar) , NULL);
 
 #define CONDVARWAIT(condvar, lock) {		\
-    _NOTE_START_WAIT;				\
+    _NOTE_START_WAIT();				\
     pthread_cond_wait(&(condvar), &(lock));	\
-    _NOTE_END_WAIT;				\
+    _NOTE_END_WAIT();				\
   }						\
 
 #define CONDVARSIGNAL(condvar) {		\
-    _NOTE_START_SIGNAL;				\
+    _NOTE_START_SIGNAL();			\
     pthread_cond_signal(&(condvar));		\
-    _NOTE_END_SIGNAL;				\
+    _NOTE_END_SIGNAL();				\
   }						\
 
 #define CONDVARBCAST(condvar) {			\
-    _NOTE_START_SIGNAL;				\
+    _NOTE_START_SIGNAL();			\
     pthread_cond_broadcast(&(condvar));		\
-    _NOTE_END_SIGNAL;				\
+    _NOTE_END_SIGNAL();				\
   }						\
 
 

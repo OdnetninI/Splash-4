@@ -21,6 +21,10 @@
 #ifndef _STDINC_H_
 #define _STDINC_H_
 
+#pragma once
+
+#include "../common/common.h"
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>

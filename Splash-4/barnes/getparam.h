@@ -1,6 +1,8 @@
 #ifndef _GETPARAM_H_
 #define _GETPARAM_H_
 
+#pragma once
+
 void initparam(string *defv);
 string getparam(string name);
 long getiparam(string name);

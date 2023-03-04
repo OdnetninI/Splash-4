@@ -13,12 +13,13 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
-
+#include "../common/common.h"
 /*
  * GRAV.C:
  */
 
-EXTERN_ENV
+EXTERN_ENV();
+
 #define global extern
 
 #include "stdinc.h"

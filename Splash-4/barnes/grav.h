@@ -1,6 +1,8 @@
 #ifndef _GRAV_H_
 #define _GRAV_H_
 
+#pragma once
+
 void hackgrav(bodyptr p, long ProcessId);
 void gravsub(register nodeptr p, long ProcessId);
 void hackwalk(long ProcessId);

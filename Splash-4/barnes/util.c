@@ -13,8 +13,10 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#include "../common/common.h"
 
-EXTERN_ENV
+EXTERN_ENV();
+
 #define global extern
 
 #include "stdinc.h"

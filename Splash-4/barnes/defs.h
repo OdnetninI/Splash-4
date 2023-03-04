@@ -17,6 +17,10 @@
 #ifndef _DEFS_H_
 #define _DEFS_H_
 
+#pragma once
+
+#include "../common/common.h"
+
 //#include <assert.h>
 
 #define MAX_PROC 1024

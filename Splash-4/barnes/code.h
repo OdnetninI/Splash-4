@@ -21,6 +21,10 @@
 #ifndef _CODE_H_
 #define _CODE_H_
 
+#pragma once
+
+#include "../common/common.h"
+
 #define PAD_SIZE (PAGE_SIZE / (sizeof(long)))
 
 /* Defined by the input file */
@@ -155,4 +159,5 @@ void Housekeep(long ProcessId);
 void setbound(void);
 long  Log_base_2(long number);
 long  intpow(long i, long j);
-#endif
+
+#endif /* _CODE_H_ */

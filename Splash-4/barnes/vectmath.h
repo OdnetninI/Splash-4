@@ -21,6 +21,7 @@
 #ifndef _VECMATH_H_
 #define _VECMATH_H_
 
+#pragma once
 
 
 #define NDIM 3L

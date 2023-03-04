@@ -47,7 +47,7 @@
     _NOTE_END_LOCK();				\
   }						\
 
-#define AUNLOCK(lock, index) {			\
+#define AULOCK(lock, index) {			\
     _NOTE_START_UNLOCK();			\
     pthread_mutex_unlock(&((lock)[(index)]));	\
     _NOTE_END_UNLOCK();				\

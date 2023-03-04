@@ -1,6 +1,8 @@
 #ifndef _LOAD_H_
 #define _LOAD_H_
 
+#pragma once
+
 void maketree(long ProcessId);
 cellptr InitCell(cellptr parent, long ProcessId);
 leafptr InitLeaf(cellptr parent, long ProcessId);

@@ -64,8 +64,9 @@ Command line options:
     12) NPROC (int) : The number of processors.
        Default is 1.
 */
+#include "../common/common.h"
 
-MAIN_ENV
+MAIN_ENV();
 
 #define global  /* nada */
 
@@ -290,7 +291,7 @@ int main (int argc, string argv[])
 	  ((float)(Global->tracktime-Global->partitiontime-
 		   Global->treebuildtime-Global->forcecalctime))/
 	  Global->tracktime);
-   MAIN_END;
+   MAIN_END();
 }
 
 /*
@@ -298,7 +299,7 @@ int main (int argc, string argv[])
  */
 void ANLinit()
 {
-   MAIN_INITENV(,70000000,);
+   MAIN_INITENV(,70000000);
    /* Allocate global, shared memory */
 
    Global = (struct GlobalMemory *) G_MALLOC(sizeof(struct GlobalMemory));
