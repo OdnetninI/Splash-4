@@ -13,7 +13,7 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
-
+#include "../common/common.h"
 
 /*
  * NAME
@@ -185,13 +185,8 @@ VOID	Shade(VEC3 iP, VEC3 N, RAY *ray, IRECORD *hit, INT pid)
 		lightlen = VecLen(Lvec);
 		VecNorm(Lvec);
 		VecCopy(shad_ray.D, Lvec);
-/*
-		LOCK(gm->ridlock);
-		shad_ray.id = gm->rid++;
-		UNLOCK(gm->ridlock);
-*/
 		
-		shad_ray.id = FETCH_ADD(gm->rid, 1)		
+		shad_ray.id = FETCH_ADD(gm->rid, 1);
 		
 		NdotL = VecDot(N, Lvec);
 
@@ -267,13 +262,8 @@ VOID	Shade(VEC3 iP, VEC3 N, RAY *ray, IRECORD *hit, INT pid)
 			{
 			SpecularDirection(secondary_ray.D, N, ray->D);
 			secondary_ray.level = ray->level + 1;
-/*
-			LOCK(gm->ridlock);
-			secondary_ray.id = gm->rid++;
-			UNLOCK(gm->ridlock);
-*/
-
-			secondary_ray.id = FETCH_ADD(gm->rid, 1)
+			
+			secondary_ray.id = FETCH_ADD(gm->rid, 1);
 			
 			secondary_ray.x = ray->x;
 			secondary_ray.y = ray->y;
@@ -290,12 +280,8 @@ VOID	Shade(VEC3 iP, VEC3 N, RAY *ray, IRECORD *hit, INT pid)
 			if (TransmissionDirection(secondary_ray.D, N, ray->D, po->surf->refrindex))
 				{
 				secondary_ray.level = ray->level + 1;
-/*
-				LOCK(gm->ridlock);
-				secondary_ray.id = gm->rid++;
-				UNLOCK(gm->ridlock);
-*/
-				secondary_ray.id = FETCH_ADD(gm->rid, 1)
+
+				secondary_ray.id = FETCH_ADD(gm->rid, 1);
 
 				secondary_ray.x = ray->x;
 				secondary_ray.y = ray->y;

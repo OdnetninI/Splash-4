@@ -13,7 +13,7 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
-
+#include "../common/common.h"
 
 /*
  * NAME
@@ -232,13 +232,8 @@ VOID	StartRayTrace()
 	UINT	begin;
 	UINT	end;
 	UINT	lapsed;
-
-/*
-	LOCK(gm->pidlock)
-	pid = gm->pid++;
-	UNLOCK(gm->pidlock)
-*/
-	pid = FETCH_ADD(gm->pid, 1)
+	
+	pid = FETCH_ADD(gm->pid, 1);
 
 	if ((pid == 0) ||  (dostats))
         CLOCK(begin);
@@ -386,7 +381,7 @@ int	main(int argc, CHAR *argv[])
 	 */
 
 	MaxGlobMem <<= 20;			/* Convert MB to bytes.      */
-	MAIN_INITENV(,MaxGlobMem + 512*1024)
+	MAIN_INITENV(,MaxGlobMem + 512*1024);
 	gm = (GMEM *)G_MALLOC(sizeof(GMEM));
 
 
@@ -508,6 +503,6 @@ int	main(int argc, CHAR *argv[])
         printf("%20s%20d\n","Avg = ",(int) (((double) totalproctime) / ((double) (1.0 * gm->nprocs))));
     }
 
-	MAIN_END
+    MAIN_END();
 	}
 

@@ -13,7 +13,12 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __RT_H__
+#define __RT_H__
 
+#pragma once
+
+#include "../common/common.h"
 
 /*
  * NAME
@@ -34,9 +39,9 @@
  */
 
 #ifdef	MAIN
-MAIN_ENV
+MAIN_ENV();
 #else
-EXTERN_ENV
+EXTERN_ENV();
 #endif
 
 #ifndef M_PI_2
@@ -946,3 +951,5 @@ INT GetJob(RAYJOB *job, INT pid);
 INT GetJobs(RAYJOB *job, INT pid);
 void PrintWorkPool(INT pid);
 void InitWorkPool(INT pid);
+
+#endif /* __RT_H__ */

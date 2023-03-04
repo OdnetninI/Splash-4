@@ -13,7 +13,7 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
-
+#include "../common/common.h"
 
 /*
  * NAME
@@ -175,12 +175,8 @@ VOID	ConvertPrimRayJobToRayMsg(RAY *ray, REAL x, REAL y)
 
 	ray->level  = 0;
 	ray->weight = 1.0/(REAL)NumSubRays;
-/*
-	LOCK(gm->ridlock);
-	ray->id = gm->rid++;
-	UNLOCK(gm->ridlock);
-*/
-	ray->id = FETCH_ADD(gm->rid, 1)
+
+	ray->id = FETCH_ADD(gm->rid, 1);
 	
 	ray->x = (INT)x;
 	ray->y = (INT)y;
