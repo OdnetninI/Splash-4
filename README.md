@@ -1,5 +1,4 @@
 > **WARNING:** **This branch is experimental, please use the master branch**: Only proceed if you know what you are doing
-=========================================================================================================================
 
 
 Splash-4 Benchmark Suite
