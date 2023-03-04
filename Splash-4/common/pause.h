@@ -25,15 +25,15 @@
 #define CLEARPAUSE(sem) {;}
 
 #define SETPAUSE(sem) {				\
-  _NOTE_START_SEM_POST;				\
-  sem_post(&(sem));				\
-  _NOTE_END_SEM_POST;				\
+    _NOTE_START_SEM_POST();			\
+    sem_post(&(sem));				\
+    _NOTE_END_SEM_POST();			\
   }						\
 
 #define WAITPAUSE(sem) {			\
-  _NOTE_START_SEM_WAIT;				\
-  sem_wait(&(sem));				\
-  _NOTE_END_SEM_WAIT;				\
+    _NOTE_START_SEM_WAIT();			\
+    sem_wait(&(sem));				\
+    _NOTE_END_SEM_WAIT();			\
   }						\
 
 #endif /* __SPLASH_4__PAUSE_H__ */

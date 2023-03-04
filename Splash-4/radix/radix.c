@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
+#include "../common/common.h"
 
 #define DEFAULT_P                    1
 #define DEFAULT_N               262144
@@ -53,7 +54,7 @@
 #define PAGE_MASK     (~(PAGE_SIZE-1))
 #define MAX_RADIX                 4096
 
-MAIN_ENV
+MAIN_ENV();
 
 struct prefix_node {
    long densities[MAX_RADIX];
@@ -190,7 +191,7 @@ int main(int argc, char *argv[])
      }
    }
 
-   MAIN_INITENV(,80000000)
+   MAIN_INITENV(,80000000);
 
    log2_radix = log_2(radix); 
    log2_keys = log_2(num_keys);
@@ -388,7 +389,7 @@ int main(int argc, char *argv[])
      test_sort(global->final);  
    }
   
-   MAIN_END;
+   MAIN_END();
 }
 
 void slave_sort()
@@ -432,14 +433,7 @@ void slave_sort()
    long offset;
 
    stats = dostats;
-/*
-   LOCK(global->lock_Index)
-     MyNum = global->Index;
-     global->Index++;
-   UNLOCK(global->lock_Index)
-*/
-
-	MyNum = FETCH_ADD(global->Index, 1)
+   MyNum = FETCH_ADD(global->Index, 1);
 
 /* POSSIBLE ENHANCEMENT:  Here is where one might pin processes to
    processors to avoid migration */
