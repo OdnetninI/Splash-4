@@ -25,12 +25,13 @@
  *       Courtesy of Pat Hanrahan.
  *
  ***************************************************************/
+#include "../common/common.h"
 
-EXTERN_ENV;
+EXTERN_ENV();
 
 #include <stdio.h>
 
-m4_include(radiosity.h)
+#include "radiosity.h"
 
 
 ModelDataBase room_model[] =

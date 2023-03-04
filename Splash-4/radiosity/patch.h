@@ -18,6 +18,10 @@
 #ifndef _PATCH_H
 #define _PATCH_H
 
+#pragma once
+
+#include "../common/common.h"
+
 #include "structs.h"
 
 /************************************************************************

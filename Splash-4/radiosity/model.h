@@ -19,6 +19,9 @@
 #ifndef _MODEL_H
 #define _MODEL_H
 
+#pragma once
+
+#include "../common/common.h"
 
 /************************************************************************
 *

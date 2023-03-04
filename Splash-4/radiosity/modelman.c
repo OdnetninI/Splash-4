@@ -23,12 +23,13 @@
  *       (2) Process modeling tasks.
  *
  *************************************************************************/
+#include "../common/common.h"
 
 #include <stdio.h>
 
-EXTERN_ENV;
+EXTERN_ENV();
 
-m4_include(radiosity.h)
+#include "radiosity.h"
 
 static void init_test_model_tasks(long process_id);
 static void init_room_model_tasks(ModelDataBase *model, long process_id);

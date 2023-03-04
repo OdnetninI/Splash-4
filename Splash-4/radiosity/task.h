@@ -18,6 +18,9 @@
 #ifndef _TASK_H
 #define _TASK_H
 
+#pragma once
+
+#include "../common/common.h"
 
 /************************************************************************
 *

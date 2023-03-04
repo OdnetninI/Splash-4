@@ -19,12 +19,13 @@
  *	Utility package
  *
  ***************************************************************/
+#include "../common/common.h"
 
 #include <stdio.h>
 
-EXTERN_ENV;
+EXTERN_ENV();
 
-m4_include(radiosity.h)
+#include "radiosity.h"
 
 static void clear_element_radiosity(Element *elem, long dummy, long process_id);
 

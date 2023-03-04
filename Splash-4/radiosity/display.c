@@ -13,12 +13,13 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#include "../common/common.h"
 
 #include <stdio.h>
 
-EXTERN_ENV;
+EXTERN_ENV();
 
-m4_include(radiosity.h)
+#include "radiosity.h"
 
 static void add_radiosity_to_vertex(Edge *edge, long reverse, Element *elem, Vertex *p_c, long process_id);
 static void _display_shaded_triangle(ElemVertex *ev1, ElemVertex *ev2, ElemVertex *ev3, Edge *e12, Edge *e23, Edge *e31, long process_id);

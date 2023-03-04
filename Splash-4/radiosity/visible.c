@@ -20,13 +20,13 @@
  *
  *
  ***************************************************************/
-
+#include "../common/common.h"
 #include	<stdio.h>
 #include        <math.h>
 
-EXTERN_ENV;
+EXTERN_ENV();
 
-m4_include(radiosity.h)
+#include "radiosity.h"
 
 #define VIS_RANGE_MARGIN (0.01)
 
@@ -757,7 +757,7 @@ void visibility_task(Element *elem, Interaction *inter, long n_inter, void (*k)(
     new_vis_undef_count = elem->n_vis_undef_inter ;
     UNLOCK(elem->elem_lock->lock);
 */
-	new_vis_undef_count = FETCH_SUB(elem->n_vis_undef_inter, n_inter)
+    new_vis_undef_count = FETCH_SUB(elem->n_vis_undef_inter, n_inter);
 	new_vis_undef_count -= n_inter;
 #if PATCH_ASSIGNMENT == PATCH_ASSIGNMENT_COSTBASED
     pc = &global->patch_cost[ elem->patch->seq_no ] ;

@@ -21,6 +21,7 @@
  *	    Main program
  *
  ***************************************************************/
+#include "../common/common.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -33,9 +34,9 @@
 
 /* ANL macro initialization */
 
-MAIN_ENV;
+MAIN_ENV();
 
-m4_include(radiosity.h)
+#include "radiosity.h"
 
 
 
@@ -326,7 +327,7 @@ int main(int argc, char *argv[])
             g_start( expose_callback,
                     N_SLIDERS, sliders, N_CHOICES, choices ) ;
         }
-    MAIN_END;
+    MAIN_END();
     exit(0) ;
 }
 
@@ -808,12 +809,8 @@ void radiosity()
 {
     long process_id;
     long rad_start, refine_done, vertex_start, vertex_done;
-/*
-    LOCK(global->index_lock);
-    process_id = global->index++;
-    UNLOCK(global->index_lock);
-    */
-    process_id = FETCH_ADD(global->index, 1)
+    
+    process_id = FETCH_ADD(global->index, 1);
     process_id = process_id % n_processors;
 
     if ((process_id == 0) || (dostats))

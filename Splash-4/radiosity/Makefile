@@ -20,16 +20,16 @@ $(TARGET): $(OBJS) $(LOADLIBES)
 	$(CC) $(OBJS) $(CFLAGS) $(LOADLIBES) -o $(TARGET) $(LDFLAGS)
 
 radiosity.h: patch.h model.h parallel.h task.h
-rad_main.c: rad_main.c.in $(HS)
-patchman.c: patchman.c.in $(HS)
-elemman.c: elemman.c.in $(HS)
-taskman.c: taskman.c.in $(HS)
-modelman.c: modelman.c.in $(HS)
-smallobj.c: smallobj.c.in $(HS)
-display.c: display.c.in $(HS)
-visible.c: visible.c.in $(HS)
-rad_tools.c: rad_tools.c.in $(HS)
-room_model.c: room_model.c.in $(HS)
+rad_main.c: $(HS)
+patchman.c: $(HS)
+elemman.c: $(HS)
+taskman.c: $(HS)
+modelman.c: $(HS)
+smallobj.c: $(HS)
+display.c: $(HS)
+visible.c: $(HS)
+rad_tools.c: $(HS)
+room_model.c: $(HS)
 
 glibdumb/glib.a:
 	$(MAKE) -C glibdumb

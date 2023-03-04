@@ -23,12 +23,12 @@
  *       (2) Management of BSP tree (insertion,traversal)
  *
  *************************************************************************/
-
+#include "../common/common.h"
 #include <stdio.h>
 
-EXTERN_ENV;
+EXTERN_ENV();
 
-m4_include(radiosity.h)
+#include "radiosity.h"
 
 static void _foreach_patch(Patch *node, void (*func)(), long arg1, long process_id);
 static void _foreach_d_s_patch(Vertex *svec, Patch *node, void (*func)(), long arg1, long process_id);

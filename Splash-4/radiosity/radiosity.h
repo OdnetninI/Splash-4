@@ -21,11 +21,15 @@ of the program, as well as lobal data structure declarations */
 #ifndef _RADIOSITY_H
 #define _RADIOSITY_H
 
+#pragma once
+
+#include "../common/common.h"
+
 #include <math.h>
-m4_include(parallel.h)
-m4_include(patch.h)
-m4_include(model.h)
-m4_include(task.h)
+#include "parallel.h"
+#include "patch.h"
+#include "model.h"
+#include "task.h"
 #include "glib.h"
 #include "pslib.h"
 

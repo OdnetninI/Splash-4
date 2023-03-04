@@ -20,13 +20,13 @@
  *
  *
  *************************************************************************/
-
+#include "../common/common.h"
 #include <stdio.h>
 #include <string.h>
 
-EXTERN_ENV;
+EXTERN_ENV();
 
-m4_include(radiosity.h)
+#include "radiosity.h"
 
 struct {
     char pad1[PAGE_SIZE];	 	/* padding to avoid false-sharing

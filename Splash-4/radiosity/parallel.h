@@ -23,7 +23,9 @@
 #ifndef _PARALLEL_H
 #define _PARALLEL_H
 
+#pragma once
 
+#include "../common/common.h"
 
 /***************************************************************************
 *

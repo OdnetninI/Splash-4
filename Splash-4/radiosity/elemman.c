@@ -21,14 +21,14 @@
  *       (1) Creation/initialization of a new instance of an element object.
  *       (2) Recursive refinement of elements.
  */
-
+#include "../common/common.h"
 
 #include <stdio.h>
 #include <string.h>
 
-EXTERN_ENV;
+EXTERN_ENV();
 
-m4_include(radiosity.h)
+#include "radiosity.h"
 
 static void _foreach_element(Element *elem, void (*func)(), long arg1, long process_id);
 static void _foreach_leaf_element(Element *elem, void (*func)(), long arg1, long process_id);
