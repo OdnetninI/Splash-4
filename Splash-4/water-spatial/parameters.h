@@ -13,13 +13,16 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __PARAMETERS_H__
+#define __PARAMETERS_H__
 
-/* some variable declarations and some macro definitions */
+#pragma once
 
-extern double OMAS,HMAS,WTMOL,ROH,ANGLE,FHM,FOM,ROHI,ROHI2;
-extern long NATOMS;
-#define max(a,b) ( (a) < (b) ) ? b : a
-#define min(a,b) ( (a) > (b) ) ? b : a
-#define ONE ((double) 1)
-#define TWO ((double) 2)
-#define FIVE ((double) 5)
+/* contains the definitions of certain system constants */
+
+#define MAXODR 7                    /* Order of predictor-corrector method + 1 */
+#define NATOM 3                     /* Atoms per molecule, H-O-H */
+#define MXOD2 (MAXODR+2)            /* Variables maintained per mol */
+#define NDIR 3                      /* Number of spatial directions */
+
+#endif /* __PARAMETERS_H__ */

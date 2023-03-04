@@ -13,45 +13,15 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __MDVAR_H__
+#define __MDVAR_H__
 
-  /* this file contains the declarations of the main data
-  structure types used by the program */
+#pragma once
+/* some variable declarations */
 
-#define BOTH 2
-typedef double vm_type[3];
+extern double  TEMP,RHO,TSTEP,BOXL,BOXH,CUTOFF,CUT2;
+extern double  BOX_LENGTH;
+extern long    NMOL,NORDER,NATMO,NATMO3,NMOL1;
+extern long    BOX_PER_SIDE, BPS_SQRD;
 
-typedef struct mol_dummy {
-      vm_type VM;
-      double F[MXOD2][NDIR][NATOM];
-} molecule_type;
-
-typedef struct link {
-      molecule_type mol;
-      struct link *next_mol;
-} link_type;
-
-typedef struct box_dummy {
-      struct link *list;
-      LOCKDEC(boxlock)
-} box_type;
-
-extern box_type ***BOX;
-
-typedef struct array_dummy {
-      long box[NDIR][BOTH];
-} first_last_array;
-
-extern first_last_array **start_end;
-
-typedef struct list_of_boxes {
-      long coord[3];
-      struct list_of_boxes *next_box;
-} box_list;
-
-extern box_list **my_boxes;
-
-extern double  TLC[100], FPOT, FKIN;
-extern long IX[3*MXOD2+1], IRST,NVAR,NXYZ,NXV,IXF,IYF,IZF,IMY,IMZ;
-
-extern long NumProcs;
-extern long NumBoxes;
+#endif /* __MDVAR_H__ */

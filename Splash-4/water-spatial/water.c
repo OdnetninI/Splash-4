@@ -13,8 +13,9 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#include "../common/common.h"
 
-MAIN_ENV
+MAIN_ENV();
 
 /*  Usage:   water < infile,
     where infile has 10 fields which can be described in order as
@@ -174,7 +175,7 @@ int main(int argc, char **argv)
         double proccbrt;
         long gmem_size = sizeof(struct GlobalMemory);
 
-        MAIN_INITENV(,40000000,);  /* macro call to initialize
+        MAIN_INITENV(,40000000);  /* macro call to initialize
                                       shared memory etc. */
 
 
@@ -357,7 +358,7 @@ int main(int argc, char **argv)
 
     printf("\nExited Happily with XTT = %g (note: XTT value is garbage if NPRINT > NSTEP)\n", XTT);
 
-    MAIN_END;
+    MAIN_END();
 } /* main.c */
 
 void WorkStart() /* routine that each created process starts at;
@@ -365,12 +366,8 @@ void WorkStart() /* routine that each created process starts at;
 {
     long ProcID;
     double LocalXTT;
-/*
-    LOCK(gl->IndexLock);
-    ProcID = gl->Index++;
-    UNLOCK(gl->IndexLock);
-*/
-	ProcID = FETCH_ADD(gl->Index, 1)
+
+    ProcID = FETCH_ADD(gl->Index, 1);
     ProcID = ProcID % NumProcs;
 
     /*  POSSIBLE ENHANCEMENT:  Here's where one might bind processes to processors

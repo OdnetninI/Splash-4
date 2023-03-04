@@ -13,10 +13,27 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __SPLIT_H__
+#define __SPLIT_H__
 
+#pragma once
+  /* some constant definitions */
+  
+#define H1 0
+#define O  1
+#define H2 2
+#define XDIR 0
+#define YDIR 1
+#define ZDIR 2
+#define DISP 0
+#define VEL 1
+#define ACC 2
+#define DER_3 3
+#define DER_4 4
+#define DER_5 5
+#define DER_6 6
+#define FORCES 7
+#define FIRST 0
+#define LAST 1
 
-/* sets up files for i/o to match the device numbers used
-in the original FORTRAN program from the PERFECT Club */
-
-extern FILE *six;
-
+#endif /* __SPLIT_H__ */

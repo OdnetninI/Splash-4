@@ -13,9 +13,53 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __MDDATA_H__
+#define __MDDATA_H__
 
-/*  This file contains declarations for some variables
-needed for force calculation that are initialized in the program and
-then never modified */
+#pragma once
 
-extern double FC11,FC12,FC13,FC33,FC111,FC333,FC112,FC113,FC123,FC133,FC1111,FC3333,FC1112,FC1122,FC1113,FC1123,FC1133,FC1233,FC1333;
+#include "../common/common.h"
+
+  /* this file contains the declarations of the main data
+  structure types used by the program */
+
+#define BOTH 2
+typedef double vm_type[3];
+
+typedef struct mol_dummy {
+      vm_type VM;
+      double F[MXOD2][NDIR][NATOM];
+} molecule_type;
+
+typedef struct link {
+      molecule_type mol;
+      struct link *next_mol;
+} link_type;
+
+typedef struct box_dummy {
+      struct link *list;
+      LOCKDEC(boxlock);
+} box_type;
+
+extern box_type ***BOX;
+
+typedef struct array_dummy {
+      long box[NDIR][BOTH];
+} first_last_array;
+
+extern first_last_array **start_end;
+
+typedef struct list_of_boxes {
+      long coord[3];
+      struct list_of_boxes *next_box;
+} box_list;
+
+extern box_list **my_boxes;
+
+extern double  TLC[100], FPOT, FKIN;
+extern long IX[3*MXOD2+1], IRST,NVAR,NXYZ,NXV,IXF,IYF,IZF,IMY,IMZ;
+
+extern long NumProcs;
+extern long NumBoxes;
+
+#endif /* __MDDATA_H__ */

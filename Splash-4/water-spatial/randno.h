@@ -13,7 +13,13 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __RANDNO_H__
+#define __RANDNO_H__
 
-/* some variable declarations */
+#pragma once
+/* variable declarations needed for random numbers */
 
-extern double  QQ,A1,B1,A2,B2,A3,B3,A4,B4,AB1,AB2,AB3,AB4,C1,C2,QQ2,QQ4,REF1,REF2,REF4;
+extern double R3[128],R1;
+extern long I2;
+
+#endif /* __RANDNO_H__ */

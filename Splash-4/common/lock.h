@@ -24,33 +24,33 @@
 #define LOCKINIT(lock) { pthread_mutex_init(&(lock), NULL); }
 
 #define LOCK(lock) {				\
-  _NOTE_START_LOCK;				\
-  pthread_mutex_lock(&(lock));			\
-  _NOTE_END_LOCK;				\
+    _NOTE_START_LOCK();				\
+    pthread_mutex_lock(&(lock));		\
+    _NOTE_END_LOCK();				\
   }						\
 
 #define UNLOCK(lock) {				\
-  _NOTE_START_UNLOCK;				\
-  pthread_mutex_unlock(&(lock));		\
-  _NOTE_END_UNLOCK;				\
+    _NOTE_START_UNLOCK();			\
+    pthread_mutex_unlock(&(lock));		\
+    _NOTE_END_UNLOCK();				\
   }						\
 
 #define ALOCKDEC(lock, index) pthread_mutex_t (lock)[index];
 #define ALOCKINIT(lock, numLocks) {		\
-  for (int i = 0; i < (numLocks); ++i)		\
-    pthread_mutex_init(&((lock)[i]), NULL);	\
+    for (int i = 0; i < (numLocks); ++i)	\
+      pthread_mutex_init(&((lock)[i]), NULL);	\
   }						\
 
 #define ALOCK(lock, index) {			\
-  _NOTE_START_LOCK;				\
-  pthread_mutex_lock(&((lock)[(index)]));	\
-  _NOTE_END_LOCK;				\
+    _NOTE_START_LOCK();				\
+    pthread_mutex_lock(&((lock)[(index)]));	\
+    _NOTE_END_LOCK();				\
   }						\
 
 #define AUNLOCK(lock, index) {			\
-  _NOTE_START_UNLOCK;				\
-  pthread_mutex_unlock(&((lock)[(index)]));	\
-  _NOTE_END_UNLOCK;				\
+    _NOTE_START_UNLOCK();			\
+    pthread_mutex_unlock(&((lock)[(index)]));	\
+    _NOTE_END_UNLOCK();				\
   }						\
 
 #define AGETL(lock, index) ((lock)[index])

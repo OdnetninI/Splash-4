@@ -13,8 +13,18 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __WATER_H__
+#define __WATER_H__
 
-/* variable declarations needed for random numbers */
+#pragma once
+/* some variable declarations and some macro definitions */
 
-extern double R3[128],R1;
-extern long I2;
+extern double OMAS,HMAS,WTMOL,ROH,ANGLE,FHM,FOM,ROHI,ROHI2;
+extern long NATOMS;
+#define max(a,b) ( (a) < (b) ) ? b : a
+#define min(a,b) ( (a) > (b) ) ? b : a
+#define ONE ((double) 1)
+#define TWO ((double) 2)
+#define FIVE ((double) 5)
+
+#endif /* __WATER_H__ */

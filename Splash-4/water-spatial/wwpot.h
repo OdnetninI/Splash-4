@@ -13,11 +13,12 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __WWPOT_H__
+#define __WWPOT_H__
 
-/* contains the definitions of certain system constants */
+#pragma once
+/* some variable declarations */
 
-#define MAXODR 7                    /* Order of predictor-corrector method + 1 */
-#define NATOM 3                     /* Atoms per molecule, H-O-H */
-#define MXOD2 (MAXODR+2)            /* Variables maintained per mol */
-#define NDIR 3                      /* Number of spatial directions */
+extern double  QQ,A1,B1,A2,B2,A3,B3,A4,B4,AB1,AB2,AB3,AB4,C1,C2,QQ2,QQ4,REF1,REF2,REF4;
 
+#endif /* __WWPOT_H__ */

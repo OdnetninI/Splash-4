@@ -13,9 +13,14 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __FILEIO_H__
+#define __FILEIO_H__
 
-/*  This file contains declarations for some variables
-that are initialized to constants in the program and
-then never modified */
+#pragma once
 
-extern double UNITT,UNITL,UNITM,BOLTZ,AVGNO,PCC[11];
+/* sets up files for i/o to match the device numbers used
+in the original FORTRAN program from the PERFECT Club */
+
+extern FILE *six;
+
+#endif /* __FILEIO_H__ */
