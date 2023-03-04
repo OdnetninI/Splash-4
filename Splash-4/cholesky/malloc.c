@@ -47,7 +47,7 @@ void MallocInit(long P)
   mallocP = P;
 
   mem_pool = (struct MemPool *)
-    G_MALLOC((mallocP+1)*sizeof(struct MemPool), 0);
+    G_MALLOC((mallocP+1)*sizeof(struct MemPool));
   mem_pool++;
   /****** access to mem_pool[-1] is valid ******/
 
@@ -63,12 +63,12 @@ void InitOneFreeList(long p)
   LOCKINIT(mem_pool[p].memoryLock);
   if (p > 0) {
     mem_pool[p].freeBlock = (long **)
-      G_MALLOC((MAXFAST+1)*sizeof(long *), p);
+      G_MALLOC((MAXFAST+1)*sizeof(long *));
     MigrateMem(mem_pool[p].freeBlock, (MAXFAST+1)*sizeof(long *), p);
   }
   else {
     mem_pool[p].freeBlock = (long **)
-      G_MALLOC((MAXFAST+1)*sizeof(long *), 0);
+      G_MALLOC((MAXFAST+1)*sizeof(long *));
     MigrateMem(mem_pool[p].freeBlock, (MAXFAST+1)*sizeof(long *),
 	       DISTRIBUTED);
   }
@@ -197,7 +197,7 @@ char *MyMalloc(long size, long home)
     block_size = max(alloc_size, 4*(1<<MAXFAST));
     LOCK(Global->memLock);
     //XXX WARNING: Violation of the strict aliasing rule
-    freespace = (long *) G_MALLOC(block_size+2*sizeof(long), home);
+    freespace = (long *) G_MALLOC(block_size+2*sizeof(long));
     MigrateMem(freespace, block_size+2*sizeof(long), home);
 
     mem_pool[home].touched++;

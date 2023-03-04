@@ -20,7 +20,7 @@
 
 #pragma once
 
-#define G_MALLOC(size, thread) ({			\
+#define G_MALLOC(size) ({			\
       void* mem = malloc(size);			\
       assert(mem);				\
       mem;					\

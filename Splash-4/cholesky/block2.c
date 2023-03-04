@@ -55,9 +55,9 @@ void CreateBlockedMatrix2(SMatrix M, long block_ub, long *T, long *firstchild, l
 				    DISTRIBUTED);
   LB.col = (long *) MyMalloc((LB.n+LB.n_domains+1)*sizeof(long), DISTRIBUTED);
 
-  LB.entry = (Entry *) G_MALLOC(LB.entries_allocated*sizeof(Entry),0);
+  LB.entry = (Entry *) G_MALLOC(LB.entries_allocated*sizeof(Entry));
   MigrateMem(LB.entry, LB.entries_allocated*sizeof(Entry), DISTRIBUTED);
-  LB.row = (long *) G_MALLOC(LB.entries_allocated*sizeof(long), 0);
+  LB.row = (long *) G_MALLOC(LB.entries_allocated*sizeof(long));
   MigrateMem(LB.row, LB.entries_allocated*sizeof(long), DISTRIBUTED);
 
   FindMachineDimensions(P);

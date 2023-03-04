@@ -127,10 +127,10 @@ int main(int argc, char *argv[])
 
   MAIN_INITENV(, SH_MEM_AMT);
 
-  gp = (struct gpid *) G_MALLOC(sizeof(struct gpid),0);
+  gp = (struct gpid *) G_MALLOC(sizeof(struct gpid));
   gp->pid = 0;
   Global = (struct GlobalMemory *)
-    G_MALLOC(sizeof(struct GlobalMemory), 0);
+    G_MALLOC(sizeof(struct GlobalMemory));
     
   BARINIT(Global->start, P)
 
@@ -332,7 +332,7 @@ void Go()
 /* POSSIBLE ENHANCEMENT:  Here is where one might pin processes to
    processors to avoid migration */
 
-  lc =(struct LocalCopies *) G_MALLOC(sizeof(struct LocalCopies)+2*PAGE_SIZE, MyNum);
+  lc =(struct LocalCopies *) G_MALLOC(sizeof(struct LocalCopies)+2*PAGE_SIZE);
   lc->freeUpdate = NULL;
   lc->freeTask = NULL;
   lc->runtime = 0;
