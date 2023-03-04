@@ -13,6 +13,10 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __DECS_H__
+#define __DECS_H__
+
+#include "../common/common.h"
 
 #define INPROCS      1024
 #define MAX_LEVELS     14
@@ -28,7 +32,7 @@
 #define BLACK_ITER      1
 #define PAGE_SIZE    4096
 
-EXTERN_ENV
+EXTERN_ENV();
 
 struct global_struct {
    long id;
@@ -261,3 +265,5 @@ void slave(void);
  * slave2.C
  */
 void slave2(long procid, long firstrow, long lastrow, long numrows, long firstcol, long lastcol, long numcols);
+
+#endif /* __DECS_H__ */

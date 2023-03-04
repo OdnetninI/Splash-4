@@ -22,6 +22,7 @@
 /*  NOTE: This code works under both the FORK and SPROC models.          */
 /*                                                                       */
 /*************************************************************************/
+#include "../common/common.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -30,7 +31,7 @@
 #include <unistd.h>
 #include "decs.h"
 
-MAIN_ENV
+MAIN_ENV();
 
 #define DEFAULT_N      258
 #define DEFAULT_P        1
@@ -173,7 +174,7 @@ int main(int argc, char *argv[])
      }
    }
 
-   MAIN_INITENV(,60000000)
+   MAIN_INITENV(,60000000);
 
    logtest = im-2;
    numlev = 1;
@@ -499,7 +500,7 @@ int main(int argc, char *argv[])
    printf("    (excludes first timestep)\n");
    printf("\n");
 
-   MAIN_END
+   MAIN_END();
 }
 
 long log_2(long number)

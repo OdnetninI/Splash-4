@@ -17,7 +17,7 @@
 /*    ****************
       subroutine slave
       ****************  */
-
+#include "../common/common.h"
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
@@ -66,14 +66,8 @@ void slave()
    unsigned long t1;
 
    ressqr = lev_res[numlev-1] * lev_res[numlev-1];
-/*
-   LOCK(locks->idlock)
-     procid = global->id;
-     global->id = global->id+1;
-   UNLOCK(locks->idlock)
-*/
-
-	procid = FETCH_ADD(global->id, 1)
+   
+   procid = FETCH_ADD(global->id, 1);
 	
 /* POSSIBLE ENHANCEMENT:  Here is where one might pin processes to
    processors to avoid migration. */

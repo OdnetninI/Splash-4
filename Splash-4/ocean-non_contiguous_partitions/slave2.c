@@ -17,7 +17,7 @@
 /*    ****************
       subroutine slave2
       ****************  */
-
+#include "../common/common.h"
 #include <stdio.h>
 #include <math.h>
 #include <time.h>

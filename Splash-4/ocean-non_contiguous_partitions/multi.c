@@ -19,6 +19,8 @@
    iterations, w cycles, and the method of half-injection for
    residual computation */
 
+#include "../common/common.h"
+
 #include <stdio.h>
 #include <math.h>
 #include <time.h>

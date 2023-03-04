@@ -19,6 +19,7 @@
         **************************************************************
 
    performs the laplacian calculation for a subblock. */
+#include "../common/common.h"
 
 #include <stdio.h>
 #include <math.h>
