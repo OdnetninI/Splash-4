@@ -13,11 +13,11 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
-
+#include "../common/common.h"
 /* this version guarentees that all blocks are zeroed, and it expects
    that all returned blocks are zero */
 
-EXTERN_ENV
+EXTERN_ENV();
 
 #include "matrix.h"
 

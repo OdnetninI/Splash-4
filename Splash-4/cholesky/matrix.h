@@ -13,7 +13,12 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __MATRIX_H__
+#define __MATRIX_H__
 
+#pragma once
+
+#include "../common/common.h"
 #include <stdio.h>
 
 #define FitsInCache 2048
@@ -302,3 +307,4 @@ void ReadVector(FILE *fp, long n, long *where, long perline, long persize);
 SMatrix LowerToFull(SMatrix L);
 void ISort(SMatrix M, long k);
 
+#endif /* __MATRIX_H__ */

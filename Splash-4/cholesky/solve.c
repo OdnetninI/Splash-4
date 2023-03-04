@@ -30,8 +30,9 @@
 /*  Note: This version works under both the FORK and SPROC models        */
 /*                                                                       */
 /*************************************************************************/
+#include "../common/common.h"
 
-MAIN_ENV
+MAIN_ENV();
 
 #include <math.h>
 #include <unistd.h>
@@ -124,7 +125,7 @@ int main(int argc, char *argv[])
   CS = sqrt(CS);
   BS = (long) floor(CS+0.5);
 
-  MAIN_INITENV(, SH_MEM_AMT)
+  MAIN_INITENV(, SH_MEM_AMT);
 
   gp = (struct gpid *) G_MALLOC(sizeof(struct gpid),0);
   gp->pid = 0;
@@ -312,7 +313,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  MAIN_END
+  MAIN_END();
 }
 
 
@@ -327,12 +328,11 @@ void Go()
   UNLOCK(Global->waitLock)
 */
 
-  MyNum = FETCH_ADD(gp->pid, 1)
+  MyNum = FETCH_ADD(gp->pid, 1);
 /* POSSIBLE ENHANCEMENT:  Here is where one might pin processes to
    processors to avoid migration */
 
-  lc =(struct LocalCopies *) G_MALLOC(sizeof(struct LocalCopies)+2*PAGE_SIZE,
-              			       MyNum)
+  lc =(struct LocalCopies *) G_MALLOC(sizeof(struct LocalCopies)+2*PAGE_SIZE, MyNum);
   lc->freeUpdate = NULL;
   lc->freeTask = NULL;
   lc->runtime = 0;
