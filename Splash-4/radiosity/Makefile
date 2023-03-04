@@ -36,3 +36,8 @@ glibdumb/glib.a:
 
 glibps/glibps.a:
 	$(MAKE) -C glibps
+
+clean:
+	$(MAKE) -C glibdumb clean
+	$(MAKE) -C glibps clean
+	$(RM) $(OBJS) RADIOSITY
