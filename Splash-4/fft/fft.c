@@ -48,6 +48,8 @@
 #include <unistd.h>
 #include <stdbool.h>
 
+#include "../common/common.h"
+
 #define PAGE_SIZE               4096
 #define NUM_CACHE_LINES        65536 
 #define LOG2_LINE_SIZE             4
@@ -55,7 +57,7 @@
 #define DEFAULT_M                 10
 #define DEFAULT_THREADS            1
 
-MAIN_ENV
+MAIN_ENV();
 
 #define SWAP_VALS(a,b) {double tmp; tmp=a; a=b; b=tmp;}
 
@@ -270,7 +272,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  MAIN_END;
+  MAIN_END();
 }
 
 void ArgumentParser(int argc, char* argv[]) {
@@ -331,9 +333,9 @@ void ArgumentParser(int argc, char* argv[]) {
 
 
 void ParallelMain() {  
-  long thread_id = FETCH_ADD(Global->id, 1)
-
-    double* upriv = (double* ) malloc((rootN-1) * (sizeof(double) << 1));
+  long thread_id = FETCH_ADD(Global->id, 1);
+  
+  double* upriv = (double* ) malloc((rootN-1) * (sizeof(double) << 1));
   CHECK_THREAD_MALLOC(thread_id, upriv);
   
   for (long i = 0; i < ((rootN-1) << 1); i++) {

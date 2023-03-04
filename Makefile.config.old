@@ -1,40 +1,51 @@
 CC := gcc
-
 CFLAGS := -O2 -pthread -D_XOPEN_SOURCE=500 -D_POSIX_C_SOURCE=200112 -std=c11 -g -fno-strict-aliasing
-CFLAGS += -D ATOMIC_BARRIERS
-
 LDFLAGS := -lm
 
 BASEDIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+MACROS := $(BASEDIR)/pthread.m4
+M4 := m4 
+M4FLAGS := -Ulen -Uindex -P
+
+M4FLAGS += -D ATOMIC_BARRIERS
+CFLAGS += -D ATOMIC_BARRIERS
 
 ifndef BASEDIR
 $(error Please define the BASEDIR variable)
 endif
 
 x = *
-
+	
 $(TARGET): $(OBJS) $(EXTRADEPS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
-
+	
+bindCores: M4FLAGS += -D BIND_CORES
 bindCores: CFLAGS += -D BIND_CORES
 bindCores: CFLAGS += -D_GNU_SOURCE
 bindCores: TARGET := $(TARGET)-bindedCores
 bindCores: $(TARGET)
 
+bindThreads: M4FLAGS += -D BIND_THREADS
 bindThreads: CFLAGS += -D BIND_THREADS
 bindThreads: CFLAGS += -D_GNU_SOURCE
 bindThreads: TARGET := $(TARGET)-bindedThreads
 bindThreads: $(TARGET)
-
+	
 debug: $(OBJS) $(EXTRADEPS)
 	$(CC) $(CFLAGS) -g -o $(TARGET) $(OBJS) $(LDFLAGS)
-
+	
 clean:
-	rm -rf *.o $(TARGET)*
+	rm -rf *.c *.h *.o $(TARGET)*
 
 semiclean:
-	rm -rf *.o
+	rm -rf *.c *.h *.o
+	
+%.h: %.h.in
+	$(M4) $(M4FLAGS) $(MACROS) $< > $@
+
+%.c: %.c.in
+	$(M4) $(M4FLAGS) $(MACROS) $< > $@
 
 %.o: %.c $(EXTRADEPS)
 	$(CC) -c $(CFLAGS) $<	
