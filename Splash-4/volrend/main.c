@@ -26,6 +26,8 @@
 
 *************************************************************************/
 
+#include "../common/common.h"
+
 #include "incl.h"
 #include <string.h>
 #include <sys/time.h>
@@ -35,7 +37,7 @@
 
 #define SH_MEM_AMT 60000000
 
-MAIN_ENV
+MAIN_ENV();
 
 #include "anl.h"
 
@@ -99,7 +101,7 @@ int main(int argc, char *argv[])
     WAIT_FOR_END(num_nodes);
   }
   SPLASH4_ROI_END();
-  MAIN_END;
+  MAIN_END();
 }
 
 
@@ -119,7 +121,7 @@ void Frame()
 
 
 
-  Global = (struct GlobalMemory *)NU_MALLOC(sizeof(struct GlobalMemory),0);
+  Global = (struct GlobalMemory *)NU_MALLOC(sizeof(struct GlobalMemory));
 
   BARINIT(Global->SlaveBarrier, num_nodes);
   BARINIT(Global->TimeBarrier, num_nodes);
@@ -247,7 +249,7 @@ void Render_Loop()
   my_node = Global->Index++;
   UNLOCK(Global->IndexLock);
 */
-  my_node = FETCH_ADD(Global->Index, 1)
+  my_node = FETCH_ADD(Global->Index, 1);
  
   my_node = my_node%num_nodes;
 
@@ -377,7 +379,7 @@ void Allocate_Image(PIXEL **address, long length)
 
   printf("    Allocating image of %ld bytes...\n", length*sizeof(PIXEL));
 
-  *address = (PIXEL *)NU_MALLOC(length*sizeof(PIXEL),0);
+  *address = (PIXEL *)NU_MALLOC(length*sizeof(PIXEL));
 
   if (*address == NULL)
 	  Error("    No space available for image.\n", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -393,7 +395,7 @@ void Allocate_MImage(MPIXEL **address, long length)
 
   printf("    Allocating image of %ld bytes...\n", length*sizeof(MPIXEL));
 
-  *address = (MPIXEL *)NU_MALLOC(length*sizeof(MPIXEL),0);
+  *address = (MPIXEL *)NU_MALLOC(length*sizeof(MPIXEL));
 
   if (*address == NULL)
     Error("    No space available for image.\n");
@@ -453,7 +455,7 @@ void Allocate_Shading_Table(PIXEL **address1, long length)
 /*  POSSIBLE ENHANCEMENT:  If you want to replicate the shade table,
     replace the macro with a simple malloc in the line below */
 
-  *address1 = (PIXEL *)NU_MALLOC(length,sizeof(PIXEL),0);
+  *address1 = (PIXEL *)NU_MALLOC(length*sizeof(PIXEL));
 
   if (*address1 == NULL)
     Error("    No space available for table.\n");

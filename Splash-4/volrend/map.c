@@ -19,6 +19,7 @@
 *    map.c:   Loads 3D density map.                                           *
 *                                                                             *
 ******************************************************************************/
+#include "../common/common.h"
 
 #include <string.h>
 #include "incl.h"
@@ -52,7 +53,7 @@ DENSITY *map_address;		/* Pointer to map                            */
 
 /* End of layout of .den file.                                               */
 
-EXTERN_ENV
+EXTERN_ENV();
 
 
 void Load_Map(filename)
@@ -101,7 +102,7 @@ void Allocate_Map(address, length)
   printf("    Allocating density map of %ld bytes...\n",
 	 length*sizeof(DENSITY));
 
-  *address = (DENSITY *)NU_MALLOC(length*sizeof(DENSITY),0);
+  *address = (DENSITY *)NU_MALLOC(length*sizeof(DENSITY));
 
   if (*address == NULL)
     Error("    No space available for map.\n");

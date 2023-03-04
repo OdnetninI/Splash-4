@@ -19,6 +19,7 @@
 *   raytrace.c:  Render dataset via raytracing.                               *
 *                                                                             *
 ******************************************************************************/
+#include "../common/common.h"
 
 #include "incl.h"
 
@@ -35,7 +36,7 @@ extern long traversal_time,trilirp_time,init_time,composite_time;
 #define SBIT(TA)                (*SBIT_ADDRESS(TA))
 #define SHD(TA)                 (*SHD_ADDRESS(TA))
 
-EXTERN_ENV
+EXTERN_ENV();
 
 void Trace_Ray(foutx, fouty, pixel_address)
      float foutx, fouty;

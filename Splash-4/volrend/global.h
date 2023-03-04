@@ -19,6 +19,12 @@
 *     global.h: global variables common to entire program               *
 *                                                                       *
 ************************************************************************/
+#ifndef __GLOBAL_H__
+#define __GLOBAL_H__
+
+#pragma once
+
+#include "../common/common.h"
 
 extern int ROTATE_STEPS;
 
@@ -254,3 +260,5 @@ void Concatenate_Transform(float composite_matrix[][4], float transformation_mat
 void Inverse_Concatenate_Transform(float composite_matrix[][4], float transformation_matrix[][4]);
 void Multiply_Matrices(float input_matrix1[][4], float input_matrix2[][4], float output_matrix[][4]);
 void Copy_Matrix(float input_matrix[][4], float output_matrix[][4]);
+
+#endif /* __GLOBAL_H__ */

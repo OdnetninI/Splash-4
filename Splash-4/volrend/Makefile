@@ -6,17 +6,17 @@ include ../../Makefile.config
 CFLAGS := $(CFLAGS) -I./libtiff
 LDFLAGS := -static -L./libtiff $(LDFLAGS) -ltiff
 
-main.c:	main.c.in incl.h anl.h
-file.c:	file.c.in incl.h
-option.c: option.c.in incl.h
-map.c: map.c.in incl.h
-normal.c: normal.c.in incl.h anl.h address.h
-opacity.c: opacity.c.in incl.h anl.h
-octree.c: octree.c.in incl.h anl.h
-view.c:	view.c.in incl.h
-render.c: render.c.in incl.h
-adaptive.c: adaptive.c.in incl.h anl.h
-raytrace.c: raytrace.c.in incl.h address.h
+main.c:	incl.h anl.h
+file.c:	incl.h
+option.c: incl.h
+map.c: incl.h
+normal.c: incl.h anl.h address.h
+opacity.c: incl.h anl.h
+octree.c: incl.h anl.h
+view.c:	incl.h
+render.c: incl.h
+adaptive.c: incl.h anl.h
+raytrace.c: incl.h address.h
 
 incl.h:	user_options.h const.h my_types.h global.h macros.h address.h
 

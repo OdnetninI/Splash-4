@@ -19,6 +19,7 @@
 *   octree.c:  Perform hiearchical enumeration of dataset.                    *
 *                                                                             *
 ******************************************************************************/
+#include "../common/common.h"
 
 #include <string.h>
 #include "incl.h"
@@ -65,7 +66,7 @@ long pyr_offset1,		/* Bit offset of desired bit within pyramid  */
      pyr_offset2;		/* Bit offset of bit within byte             */
 BYTE *pyr_address2;		/* Pointer to byte containing bit            */
 
-EXTERN_ENV
+EXTERN_ENV();
 
 #include "anl.h"
 
@@ -149,13 +150,8 @@ void Compute_Base()
   long num_xqueue,num_yqueue,num_zqueue,num_queue;
   long xstart,xstop,ystart,ystop;
   long my_node;
-
-/*
-  LOCK(Global->IndexLock);
-  my_node = Global->Index++;
-  UNLOCK(Global->IndexLock);
-*/
-  my_node = FETCH_ADD(Global->Index, 1)
+  
+  my_node = FETCH_ADD(Global->Index, 1);
  
   my_node = my_node%num_nodes;
 
@@ -218,12 +214,7 @@ void Or_Neighbors_In_Base()
   long pmap_partition,zstart,zstop;
   long my_node;
 
-/*
-  LOCK(Global->IndexLock);
-  my_node = Global->Index++;
-  UNLOCK(Global->IndexLock);
-*/
-  my_node = FETCH_ADD(Global->Index, 1)
+  my_node = FETCH_ADD(Global->Index, 1);
  
   my_node = my_node%num_nodes;
 
@@ -292,7 +283,7 @@ void Allocate_Pyramid_Level(address, length)
 on all processors, then replace the macro below with a regular malloc.
 */
 
-  *address = (BYTE *)NU_MALLOC(length*sizeof(BYTE),0);
+  *address = (BYTE *)NU_MALLOC(length*sizeof(BYTE));
 
   if (*address == NULL)
     Error("    No space available for pyramid level.\n");

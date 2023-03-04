@@ -19,7 +19,10 @@
 *    user_options.h:  Compile-time user options                               *
 *                                                                             *
 ******************************************************************************/
+#ifndef __USER_OPTIONS_H__
+#define __USER_OPTIONS_H__
 
+#pragma once
 
 /* For  varying image tile size*/
 
@@ -72,3 +75,4 @@ values.
 #define HBOXLEN                  4              /* highest_boxlen            */
 #endif
 
+#endif /* __USER_OPTIONS_H__ */

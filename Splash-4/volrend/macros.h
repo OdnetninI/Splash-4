@@ -19,7 +19,10 @@
 *     macros.h:  general C macros                                        *
 *                                                                        *
 *************************************************************************/
+#ifndef __MACROS_H__
+#define __MACROS_H__
 
+#pragma once
 
 #define MIN(X,Y)	((X) < (Y) ? (X) : (Y))
 #define MAX(X,Y)	((X) > (Y) ? (X) : (Y))
@@ -35,4 +38,4 @@
 #define	FRACT(X)	((X)-(long)(X))				  /* flt X>=0*/
 
 
-
+#endif /* __MACROS_H__ */

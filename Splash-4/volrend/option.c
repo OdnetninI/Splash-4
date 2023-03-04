@@ -19,6 +19,7 @@
 *   option.c:  Rendering options selected.                                    *
 *                                                                             *
 ******************************************************************************/
+#include "../common/common.h"
 
 #include "incl.h"
 
@@ -76,7 +77,7 @@ long pyr_lowest_level;  		/*   lowest level of pyramid to look at      */
 float angle[NM];                /* initial viewing angle                     */
 
 
-EXTERN_ENV
+EXTERN_ENV();
 
 void Init_Options()
 {

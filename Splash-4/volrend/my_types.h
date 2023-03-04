@@ -19,7 +19,10 @@
 *    my_types.h:  types used for rendering system                             *
 *                                                                             *
 ******************************************************************************/
+#ifndef __MY_TYPES_H__
+#define __MY_TYPES_H__
 
+#pragma once
 
 				/* Definition of user-defined types:         */
 typedef unsigned char DENSITY;		/*   density                         */
@@ -31,3 +34,5 @@ typedef unsigned char MPIXEL;	        /*   volatile pixel or voxel color;
 typedef unsigned char OPACITY;          /*   voxel opacity                   */
 typedef unsigned short BOOLEAN;		/*   boolean flag                    */
 typedef short VOXEL;
+
+#endif /* __MY_TYPES_H__ */

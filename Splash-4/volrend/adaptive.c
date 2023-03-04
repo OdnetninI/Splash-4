@@ -13,7 +13,7 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
-
+#include "../common/common.h"
 /*************************************************************************
 *                                                                        *
 *     adaptive.c:  Render dataset via raytracing.                        *
@@ -38,7 +38,7 @@ long itest;
 #define START_RAY       1
 #define	INTERPOLATED	((MAX_PIXEL+1)/32)	/* This pixel interpolated   */
 
-EXTERN_ENV
+EXTERN_ENV();
 
 #include "anl.h"
 
@@ -358,12 +358,8 @@ void Ray_Trace_Non_Adaptively(long my_node)
     xstop = MIN(xstart+num_xqueue,image_len[X]);
     ystart = (local_node / image_section[X]) * num_yqueue;
     ystop = MIN(ystart+num_yqueue,image_len[Y]);
-    /*
-    ALOCK(Global->QLock,local_node);
-    work = Global->Queue[local_node][0]++;
-    AULOCK(Global->QLock,local_node);
-    */
-    work = FETCH_ADD(Global->Queue[local_node][0], 1)
+    
+    work = FETCH_ADD(Global->Queue[local_node][0], 1);
     
     while (work < lnum_blocks) {
       xindex = xstart + (work%lnum_xblocks)*block_xlen;
@@ -384,7 +380,7 @@ void Ray_Trace_Non_Adaptively(long my_node)
       work = Global->Queue[local_node][0]++;
       AULOCK(Global->QLock,local_node);
       */
-      work = FETCH_ADD(Global->Queue[local_node][0], 1)
+      work = FETCH_ADD(Global->Queue[local_node][0], 1);
     }
     if (my_node == local_node) {
     /*
@@ -392,7 +388,7 @@ void Ray_Trace_Non_Adaptively(long my_node)
       Global->Queue[num_nodes][0]--;
       AULOCK(Global->QLock,num_nodes);
       */
-      FETCH_SUB(Global->Queue[num_nodes][0], 1)
+      FETCH_SUB(Global->Queue[num_nodes][0], 1);
     }
     local_node = (local_node+1)%num_nodes;
     /*

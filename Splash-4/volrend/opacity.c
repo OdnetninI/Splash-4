@@ -20,6 +20,7 @@
 *              transition width used is zero.                                 *
 *                                                                             *
 ******************************************************************************/
+#include "../common/common.h"
 
 #include <string.h>
 #include "incl.h"
@@ -40,7 +41,7 @@ OPACITY *opc_address;	        /* Pointer to opacity map                    */
 
 /* End of layout of .opc file.                                               */
 
-EXTERN_ENV
+EXTERN_ENV();
 
 #include "anl.h"
 
@@ -78,7 +79,7 @@ void Allocate_Opacity(address, length)
   printf("    Allocating opacity map of %ld bytes...\n",
 	 length*sizeof(OPACITY));
 
-  *address = (OPACITY *)NU_MALLOC(length*sizeof(OPACITY),0);
+  *address = (OPACITY *)NU_MALLOC(length*sizeof(OPACITY));
 
   if (*address == NULL)
     Error("    No space available for map.\n");
@@ -104,12 +105,8 @@ void Opacity_Compute()
   long xstart,xstop,ystart,ystop;
   long my_node;
 
-/*
-  LOCK(Global->IndexLock);
-  my_node = Global->Index++;
-  UNLOCK(Global->IndexLock);
-*/
-  my_node = FETCH_ADD(Global->Index, 1)
+  
+  my_node = FETCH_ADD(Global->Index, 1);
  
   my_node = my_node%num_nodes;
 

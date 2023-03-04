@@ -20,6 +20,7 @@
 *              operator is 1x3 and shading transition region is 0.            *
 *                                                                             *
 ******************************************************************************/
+#include "../common/common.h"
 
 #include <string.h>
 #include "incl.h"
@@ -42,7 +43,7 @@ NORMAL *norm_address;		/* Pointer to normal map                     */
 
 float nmag_epsilon;
 
-EXTERN_ENV
+EXTERN_ENV();
 
 #include "anl.h"
 
@@ -79,7 +80,7 @@ void Allocate_Normal(address, length)
   printf("    Allocating normal map of %ld bytes...\n",
 	 length*sizeof(NORMAL));
 
-  *address = (NORMAL *)NU_MALLOC(length*sizeof(NORMAL),0);
+  *address = (NORMAL *)NU_MALLOC(length*sizeof(NORMAL));
 
   if (*address == NULL)
     Error("    No space available for map.\n");
@@ -104,12 +105,8 @@ void Normal_Compute()
   long num_xqueue,num_yqueue,num_zqueue,num_queue;
   long xstart,xstop,ystart,ystop;
   long my_node;
-/*
-  LOCK(Global->IndexLock);
-  my_node = Global->Index++;
-  UNLOCK(Global->IndexLock);
-*/
-  my_node = FETCH_ADD(Global->Index, 1)
+  
+  my_node = FETCH_ADD(Global->Index, 1);
   
   my_node = my_node%num_nodes;
 

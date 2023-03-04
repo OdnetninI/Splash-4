@@ -13,7 +13,12 @@
 /*  support.                                                             */
 /*                                                                       */
 /*************************************************************************/
+#ifndef __ADDRESS_H__
+#define __ADDRESS_H__
 
+#pragma once
+
+#include "../common/common.h"
 /*************************************************************************
 *                                                                        *
 *     address.h: Definitions used for addressing maps.                   *
@@ -81,3 +86,5 @@
 				(mask_image_address+\
 				 (IY)*mask_image_len[X]+(IX))
 #define MASK_IMAGE(IY,IX)	(*MASK_IMAGE_ADDRESS(IY,IX))
+
+#endif /* __ADDRESS_H__ */

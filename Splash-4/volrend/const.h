@@ -19,6 +19,12 @@
 *     constants.h:  constants needed for rendering system 		*
 *                                                                       *
 ************************************************************************/
+#ifndef __CONST_H__
+#define __CONST_H__
+
+#pragma once
+
+#include "../common/common.h"
 
 
 #define PI           3.14159265358979323846
@@ -101,3 +107,4 @@
 #define MAX_PYRLEVEL	9	/* Maximum level in binary pyramid           */
 				/*   (allows 1x1x1..512x512x512 voxels)      */
 
+#endif /* __CONST_H__ */

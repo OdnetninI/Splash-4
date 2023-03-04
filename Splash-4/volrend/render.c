@@ -19,6 +19,7 @@
 *    render.c:  Render dataset via raytracing.                                *
 *                                                                             *
 ******************************************************************************/
+#include "../common/common.h"
 
 #include "incl.h"
 
@@ -26,7 +27,7 @@
 float obslight[NM];	        /*   observer transformed light vector       */
 float obshighlight[NM];		/*   observer transformed highlight vector   */
 
-EXTERN_ENV
+EXTERN_ENV();
 
 void Render(long my_node)           /* assumes direction is +Z */
 {

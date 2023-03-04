@@ -16,22 +16,23 @@
 
 /*************************************************************************
 *                                                                        *
-*     anl.H:  ANL macros-related stuff, file should be included at end   *
-*              of static definitions section before function definitions *
+*     incl.h:  include files needed for rendering system                 *
 *                                                                        *
-**************************************************************************/
+*************************************************************************/
+#ifndef __INCL_H__
+#define __INCL_H__
 
-#define PAD 256
+#pragma once
 
-struct GlobalMemory {
-  long Index;
-  //long Counter;
-  long Queue[MAX_NUMPROC+1][PAD];
-  BARDEC(SlaveBarrier)
-  BARDEC(TimeBarrier)
-  LOCKDEC(IndexLock)
-  LOCKDEC(CountLock)
-  ALOCKDEC(QLock,MAX_NUMPROC+1)
-  };
+#include "user_options.h"       /* User options defined at compile time      */
+#include "const.h"              /* Constant definitions                      */
+#include "my_types.h"           /* User defined type                         */
+#include "global.h"             /* Global variables                          */
+#include "macros.h"		/* Definition of general C macros            */
+#include "address.h"            /* Map address macros                        */
+#include <stdio.h>		/* Definitions for standard I/O library      */
+#include <math.h>               /* Definitions for mathematical library      */
+#include <limits.h>
+#include <sys/types.h>
 
-
+#endif /* __INCL_H__ */
