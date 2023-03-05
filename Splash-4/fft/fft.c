@@ -59,7 +59,12 @@
 
 MAIN_ENV();
 
-#define SWAP_VALS(a,b) {double tmp; tmp=a; a=b; b=tmp;}
+#define SWAP_VALS(a,b) {			\
+    double tmp;					\
+    tmp=a;					\
+    a=b;					\
+    b=tmp;					\
+  }						\
 
 #define IF_EXIT(c, msg) {			\
     if (c) {					\
@@ -67,20 +72,6 @@ MAIN_ENV();
       exit(-1);					\
     }						\
   }						\
-
-#define CHECK_MALLOC(x) {						\
-    if (x == NULL) {							\
-      fprintf(stderr, "ERROR: Could not malloc memory for "#x"\n");	\
-      exit(-1);								\
-    }									\
-  }
-
-#define CHECK_THREAD_MALLOC(tid,x) {						\
-    if (x == NULL) {								\
-      fprintf(stderr, "ERROR: Thread %ld not malloc memory for "#x"\n", tid);	\
-      exit(-1);									\
-    }										\
-  }
 
 // Global data
 struct GlobalMemory {
@@ -111,6 +102,9 @@ long num_cache_lines = NUM_CACHE_LINES;    /* number of cache lines */
 long log2_line_size = LOG2_LINE_SIZE;
 long pad_length;
 
+// Const
+const size_t size_of_an_element = sizeof(double) << 1;
+
 /*
   Forward declarations
 */
@@ -131,7 +125,6 @@ void Reverse(long N, long M, double* x);
 void FFT1DOnce(long direction, long M, long N, double* u, double* x);
 void PrintArray(long N, double* x);
 void printerr(char *str);
-long log_2(long number);
 
 /*
   Main
@@ -139,54 +132,49 @@ long log_2(long number);
 int main(int argc, char *argv[]) {    
   ArgumentParser(argc, argv);
   long m1 = M >> 1;
-
+  
   MAIN_INITENV(,80000000);
-
+  
   N = 1 << M;
   rootN = 1 << (M >> 1);
   long rowsperproc = rootN / NumThreads;
   IF_EXIT(rowsperproc == 0, "Matrix not large enough. 2**(M/2) must be >= NumThreads\n");
-
+  
   long line_size = 1 << log2_line_size;
-  if (line_size < (sizeof(double) << 1)) {
-    printf("WARNING: Each element is a complex double (%ld bytes)\n",(sizeof(double) << 1));
+  if (line_size < size_of_an_element) {
+    printf("WARNING: Each element is a complex double (%ld bytes)\n",size_of_an_element);
     printf("  => Less than one element per cache line\n");
     printf("     Computing transpose blocking factor\n");
-    long factor = (sizeof(double) << 1) / line_size;
+    long factor = size_of_an_element / line_size;
     num_cache_lines = orig_num_lines / factor;
   }
-
-  pad_length = line_size / (sizeof(double) << 1);
-  if (line_size <= (sizeof(double) << 1)) {
+  
+  pad_length = line_size / size_of_an_element;
+  if (line_size <= size_of_an_element) {
     pad_length = 1;
   }
-
-  if (rowsperproc * rootN * (sizeof(double) << 1) >= PAGE_SIZE) {
-    long pages = (pad_length * (sizeof(double) << 1) * rowsperproc) / PAGE_SIZE;
-    if (pages * PAGE_SIZE != pad_length * (sizeof(double) << 1) * rowsperproc) {
+  
+  if (rowsperproc * rootN * size_of_an_element >= PAGE_SIZE) {
+    long pages = (pad_length * size_of_an_element * rowsperproc) / PAGE_SIZE;
+    if (pages * PAGE_SIZE != pad_length * size_of_an_element * rowsperproc) {
       pages ++;
     }
-    pad_length = (pages * PAGE_SIZE) / ((sizeof(double) << 1) * rowsperproc);
+    pad_length = (pages * PAGE_SIZE) / (size_of_an_element * rowsperproc);
   }
   else {
-    pad_length = (PAGE_SIZE - (rowsperproc * rootN * (sizeof(double) << 1))) / ((sizeof(double) << 1) * rowsperproc);
-    IF_EXIT(pad_length * ((sizeof(double) << 1) * rowsperproc) !=
-	    (PAGE_SIZE - (rowsperproc * rootN * (sizeof(double) << 1))),
+    pad_length = (PAGE_SIZE - (rowsperproc * rootN * size_of_an_element)) / (size_of_an_element * rowsperproc);
+    IF_EXIT(pad_length * (size_of_an_element * rowsperproc) !=
+	    (PAGE_SIZE - (rowsperproc * rootN * size_of_an_element)),
 	    "Padding algorithm unsuccessful\n");
   }
 
   Global = (struct GlobalMemory *) G_MALLOC(sizeof(struct GlobalMemory));
-  x = (double* ) G_MALLOC((N+rootN*pad_length)*(sizeof(double) << 1)+PAGE_SIZE);
-  trans = (double* ) G_MALLOC((N+rootN*pad_length)*(sizeof(double) << 1)+PAGE_SIZE);
-  umain = (double* ) G_MALLOC(rootN*(sizeof(double) << 1));  
-  umain2 = (double* ) G_MALLOC((N+rootN*pad_length)*(sizeof(double) << 1)+PAGE_SIZE);
 
-  CHECK_MALLOC(Global);
-  CHECK_MALLOC(x);
-  CHECK_MALLOC(trans);
-  CHECK_MALLOC(umain);
-  CHECK_MALLOC(umain2);
-
+  x = (double* ) G_MALLOC((N+rootN*pad_length)*size_of_an_element+PAGE_SIZE);
+  trans = (double* ) G_MALLOC((N+rootN*pad_length)*size_of_an_element+PAGE_SIZE);
+  umain = (double* ) G_MALLOC(rootN*size_of_an_element);  
+  umain2 = (double* ) G_MALLOC((N+rootN*pad_length)*size_of_an_element+PAGE_SIZE);
+  
   x = (double* ) (((unsigned long) x) + PAGE_SIZE - ((unsigned long) x) % PAGE_SIZE);
   trans = (double* ) (((unsigned long) trans) + PAGE_SIZE - ((unsigned long) trans) % PAGE_SIZE);
   umain2 = (double* ) (((unsigned long) umain2) + PAGE_SIZE - ((unsigned long) umain2) % PAGE_SIZE);
@@ -284,7 +272,7 @@ void ArgumentParser(int argc, char* argv[]) {
       case 'p':
 	NumThreads = atoi(optarg);
 	IF_EXIT(NumThreads < 1, "NumThreads must be >= 1\n");
-	IF_EXIT(log_2(NumThreads) == -1, "NumThreads must be a power of 2\n");
+	IF_EXIT(NumThreads != (1 << LOG2(NumThreads)), "NumThreads must be a power of 2\n");
 	break;  
       case 'm':
 	M = atoi(optarg);
@@ -335,8 +323,7 @@ void ArgumentParser(int argc, char* argv[]) {
 void ParallelMain() {  
   long thread_id = FETCH_ADD(Global->id, 1);
   
-  double* upriv = (double* ) malloc((rootN-1) * (sizeof(double) << 1));
-  CHECK_THREAD_MALLOC(thread_id, upriv);
+  double* upriv = (double* ) G_MALLOC((rootN-1) * size_of_an_element);
   
   for (long i = 0; i < ((rootN-1) << 1); i++) {
     upriv[i] = umain[i];
@@ -650,23 +637,5 @@ void PrintArray(long N, double* x) {
 
 void printerr(char *str) {
   fprintf(stderr,"ERROR: %s\n",str);
-}
-
-
-long log_2(long number) {
-  long cumulative = 1;
-  long out = 0;
-
-  bool done = false;
-  while ((cumulative < number) && (!done) && (out < 50)) {
-    if (cumulative == number) done = true;
-    else {
-      cumulative = cumulative << 1;
-      out ++;
-    }
-  }
-
-  if (cumulative == number) return out;
-  return -1;
 }
 

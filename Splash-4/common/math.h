@@ -15,60 +15,44 @@
 /*                                                                          */
 /****************************************************************************/
 
-#ifndef __SPLASH_4__COMMON_H__
-#define __SPLASH_4__COMMON_H__
+#ifndef __SPLASH_4__MATH_H__
+#define __SPLASH_4__MATH_H__
 
 #pragma once
 
-#include <stdlib.h>
-#include <semaphore.h>
-#include <assert.h>
-#if __STDC_VERSION__ >= 201112L
-#include <stdatomic.h>
-#endif
-#include <stdint.h>
+#if (ARCH == X86_64) || (ARCH == X86)
 
-#include <pthread.h>
-#include <sched.h>
-#include <unistd.h>
+#define LOG2_INT(type, x) ({					\
+      type _x = (x);						\
+      type _y;							\
+      __asm__ ( "\tbsr %1, %0\n" : "=r"(_y) : "r" (_x) );	\
+      _y;							\
+    })								\
 
-#define PAGE_SIZE 4096
-#define __MAX_THREADS__ 256
+#define LOG2_64(x) ({ LOG2_INT(uint64_t, x); })
+#define LOG2_32(x) ({ LOG2_INT(uint32_t, x); })
 
+#else /* C version */
 
-#include "roi.h"
-#include "region_markers.h"
+#define LOG2_INT(type, x) ({			\
+      type _x = (x);			\
+      type _y = 0;				\
+      while(_x >>= 1) ++_y;			\
+      _y;					\
+    })						\
 
-#include "alloc.h"
-#include "atomic.h"
-#include "barrier.h"
-#include "condvar.h"
-#include "fence.h"
-#include "lock.h"
-#include "pause.h"
-#include "thread.h"
-#include "math.h"
+#define LOG2_64(x) ({ LOG2_INT(uint64_t, x); })
+#define LOG2_32(x) ({ LOG2_INT(uint32_t, x); })
 
-#define MAIN_INITENV(u,u2) {			\
-    __tid__[__threads__++] = pthread_self();	\
-  }						\
+#endif /* ARCH */
 
-#define MAIN_END() {				\
-    exit(0);					\
-  }						\
+#define LOG2(x) ({				\
+      _Generic((x),				\
+	       uint64_t: LOG2_64(x),		\
+	       uint32_t: LOG2_32(x),		\
+	       int64_t: LOG2_64(x),		\
+	       int32_t: LOG2_32(x)		\
+	       );				\
+    })						\
 
-#define MAIN_ENV() 				\
-  pthread_t __tid__[__MAX_THREADS__];		\
-  unsigned __threads__ = 0;			\
-  pthread_mutex_t __intern__;			\
-  BARDEF();					\
-  						\
-
-#define EXTERN_ENV() 				\
-  extern pthread_t __tid__[__MAX_THREADS__];	\
-  extern unsigned __threads__;			\
-  extern pthread_mutex_t __intern__;		\
-  BAREXTERN();					\
-						\
-    
-#endif /* __SPLASH_4__COMMON_H__ */
+#endif /* __SPLASH_4__MATH_H__ */
