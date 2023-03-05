@@ -55,6 +55,8 @@ MAIN_ENV();
 #define DEFAULT_B                          16
 #define min(a,b) ((a) < (b) ? (a) : (b))
 
+#define ERROR_ALLOWED                0.000001
+
 struct GlobalMemory {
   long id;
   BARDEC(barrier)
@@ -192,17 +194,7 @@ int main(int argc, char *argv[]) {
   }
 
   rhs = (double *) G_MALLOC(n*sizeof(double));
-  if (rhs == NULL) {
-    printerr("Could not malloc memory for rhs\n");
-    exit(-1);
-  } 
-
   Global = (struct GlobalMemory *) G_MALLOC(sizeof(struct GlobalMemory));
-
-  if (Global == NULL) {
-    printerr("Could not malloc memory for Global\n");
-    exit(-1);
-  }
 
 /* POSSIBLE ENHANCEMENT:  Here is where one might distribute the a[i]
    blocks across physically distributed memories as desired.
@@ -295,7 +287,6 @@ void ParallelMain() {
 
 void OneSolve(long n, long block_size, long thread_id) {
   if (doprefetch) {
-    /* to remove cold-start misses, all processors touch their own data */
     TouchA(block_size, thread_id);
   }
 
@@ -358,7 +349,6 @@ void daxpy(double *a, double *b, long n, double alpha) {
     a[i] += alpha*b[i];
   }
 }
-
 
 long BlockOwner(long I, long J) {
 	return((I + J*nblocks) % NumThreads);
@@ -553,12 +543,8 @@ void PrintA() {
 
 
 void CheckResult(long n, double **a, double *rhs) {
-  long edge = n%block_size;
-  double* y = (double *) malloc(n*sizeof(double));  
-  if (y == NULL) {
-    printerr("Could not malloc memory for y\n");
-    exit(-1);
-  }
+  long edge = n % block_size;
+  double* y = (double *) G_MALLOC(n*sizeof(double));  
   
   for (long j = 0; j < n; j++) {
     y[j] = rhs[j];
@@ -612,7 +598,7 @@ void CheckResult(long n, double **a, double *rhs) {
   double max_diff = 0.0;
   for (long j = 0; j < n; j++) {
     double diff = y[j] - 1.0;
-    if (fabs(diff) > 0.00001) {
+    if (fabs(diff) > ERROR_ALLOWED) {
       bogus = true;
       max_diff = diff;
     }

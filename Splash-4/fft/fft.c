@@ -57,6 +57,8 @@
 #define DEFAULT_M                 10
 #define DEFAULT_THREADS            1
 
+#define ERROR_ALLOWED       0.000001
+
 MAIN_ENV();
 
 #define SWAP_VALS(a,b) {			\
@@ -253,7 +255,7 @@ int main(int argc, char *argv[]) {
     printf("              INVERSE FFT TEST RESULTS\n");
     printf("Checksum difference is %.3f (%.3f, %.3f)\n",
 	   ck1-ck3, ck1, ck3);
-    if (fabs(ck1-ck3) < 0.001) {
+    if (fabs(ck1-ck3) < ERROR_ALLOWED) {
       printf("TEST PASSED\n");
     } else {
       printf("TEST FAILED\n");
