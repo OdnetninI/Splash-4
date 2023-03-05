@@ -25,3 +25,6 @@ Splash-4/volrend-no_print_lock/VOLREND-NPL
 Splash-4/water-nsquared/WATER-NSQUARED
 Splash-4/water-spatial/WATER-SPATIAL
 
+# Intermediate
+Splash-4/volrend/libtiff/g3states.h
+Splash-4/volrend/libtiff/mkg3states

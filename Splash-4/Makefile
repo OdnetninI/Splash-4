@@ -1,4 +1,4 @@
-DIRS := $(wildcard */.)
+DIRS := $(filter-out common/., $(wildcard */.))
 
 all: $(DIRS)
 clean: $(DIRS)
