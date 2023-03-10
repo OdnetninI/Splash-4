@@ -23,14 +23,19 @@
 #include <stdlib.h>
 #include <semaphore.h>
 #include <assert.h>
+
 #if __STDC_VERSION__ >= 201112L
 #include <stdatomic.h>
 #endif
-#include <stdint.h>
 
+#include <stdint.h>
+#include <stdbool.h>
 #include <pthread.h>
 #include <sched.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <math.h>
+
 
 #define PAGE_SIZE 4096
 #define __MAX_THREADS__ 256
@@ -48,6 +53,13 @@
 #include "pause.h"
 #include "thread.h"
 #include "math.h"
+
+#define IF_EXIT(c, msg) {			\
+    if (c) {					\
+      fprintf(stderr, msg);			\
+      exit(-1);					\
+    }						\
+  }						\
 
 #define MAIN_INITENV(u,u2) {			\
     __tid__[__threads__++] = pthread_self();	\

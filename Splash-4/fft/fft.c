@@ -46,7 +46,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
-#include <stdbool.h>
 
 #include "../common/common.h"
 
@@ -66,13 +65,6 @@ MAIN_ENV();
     tmp=a;					\
     a=b;					\
     b=tmp;					\
-  }						\
-
-#define IF_EXIT(c, msg) {			\
-    if (c) {					\
-      fprintf(stderr, msg);			\
-      exit(-1);					\
-    }						\
   }						\
 
 // Global data

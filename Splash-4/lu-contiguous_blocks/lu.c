@@ -39,12 +39,6 @@
 /*                                                                          */
 /****************************************************************************/
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdbool.h>
-
 #include "../common/common.h"
 
 MAIN_ENV();
