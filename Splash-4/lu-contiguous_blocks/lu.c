@@ -125,15 +125,7 @@ int main(int argc, char *argv[]) {
   }
 
   proc_bytes = (long *) malloc(NumThreads*sizeof(long));
-  if (proc_bytes == NULL) {
-	  fprintf(stderr,"Could not malloc memory for proc_bytes.\n");
-	  exit(-1);
-  }
   last_malloc = (double **) G_MALLOC(NumThreads*sizeof(double *));
-  if (last_malloc == NULL) {
-	  fprintf(stderr,"Could not malloc memory for last_malloc.\n");
-	  exit(-1);
-  }
   
   for (long i = 0; i < NumThreads; i++) {
     proc_bytes[i] = 0;
@@ -155,16 +147,12 @@ int main(int argc, char *argv[]) {
   
   for (long i = 0; i < NumThreads; i++) {
     last_malloc[i] = (double *) G_MALLOC(proc_bytes[i] + PAGE_SIZE);
-    if (last_malloc[i] == NULL) {
-      fprintf(stderr,"Could not malloc memory blocks for proc %ld\n",i);
-      exit(-1);
-    } 
     last_malloc[i] = (double *) (((unsigned long) last_malloc[i]) + PAGE_SIZE -
                      ((unsigned long) last_malloc[i]) % PAGE_SIZE);
 
-/* Note that this causes all blocks to start out page-aligned, and that
-   for block sizes that exceed cache line size, blocks start at cache-line
-   aligned addresses as well.  This reduces false sharing */
+    /* Note that this causes all blocks to start out page-aligned, and that
+    for block sizes that exceed cache line size, blocks start at cache-line
+    aligned addresses as well.  This reduces false sharing */
 
   }
   a = (double **) G_MALLOC(nblocks*nblocks*sizeof(double *));
@@ -190,28 +178,28 @@ int main(int argc, char *argv[]) {
   rhs = (double *) G_MALLOC(n*sizeof(double));
   Global = (struct GlobalMemory *) G_MALLOC(sizeof(struct GlobalMemory));
 
-/* POSSIBLE ENHANCEMENT:  Here is where one might distribute the a[i]
-   blocks across physically distributed memories as desired.
+  /* POSSIBLE ENHANCEMENT:  Here is where one might distribute the a[i]
+    blocks across physically distributed memories as desired.
 
-   One way to do this is as follows:
+    One way to do this is as follows:
 
-   for (i=0;i<nblocks;i++) {
-     for (j=0;j<nblocks;j++) {
-       proc_num = BlockOwner(i,j);
-       if ((i == nblocks-1) && (j == nblocks-1)) {
-         size = edge*edge;
-       } else if ((i == nblocks-1) || (j == nblocks-1)) {
-         size = edge*block_size;
-       } else {
-         size = block_size*block_size;
-       }
+    for (i=0;i<nblocks;i++) {
+      for (j=0;j<nblocks;j++) {
+        proc_num = BlockOwner(i,j);
+        if ((i == nblocks-1) && (j == nblocks-1)) {
+          size = edge*edge;
+        } else if ((i == nblocks-1) || (j == nblocks-1)) {
+          size = edge*block_size;
+        } else {
+          size = block_size*block_size;
+        }
 
-       Place all addresses x such that 
-       (&(a[i+j*nblocks][0]) <= x < &(a[i+j*nblocks][size-1])) 
-       on node proc_num
-     }
-   }
-*/
+        Place all addresses x such that 
+        (&(a[i+j*nblocks][0]) <= x < &(a[i+j*nblocks][size-1])) 
+        on node proc_num
+      }
+    }
+  */
 
   BARINIT(Global->barrier, NumThreads);
   
@@ -246,38 +234,37 @@ void ArgumentParser(int argc, char* argv[]) {
   extern char *optarg;
   while ((ch = getopt(argc, argv, "n:p:b:cstoh")) != -1) {
     switch(ch) {
-    case 'n': n = atoi(optarg); break;
-    case 'p': NumThreads = atoi(optarg); break;
-    case 'b': block_size = atoi(optarg); break;
-    case 'y': doprefetch = true; break;
-    case 't': test_result = true; break;
-    case 'o': doprint = true; break;
-    case 'h': printf("Usage: LU <options>\n\n");
-	      printf("options:\n");
-              printf("  -nN : Decompose NxN matrix.\n");
-              printf("  -pNumThreads : NumThreads = number of processors.\n");
-              printf("  -bB : Use a block size of B. BxB elements should fit in cache for \n");
-              printf("        good performance. Small block sizes (B=8, B=16) work well.\n");
-	      printf("  -y  : Enable touching the data before operations.\n");
-	      printf("        It is not useful when measuring the full application or the ROI.\n");
-              printf("  -c  : Copy non-locally allocated blocks to local memory before use.\n");
-              printf("  -t  : Test output.\n");
-              printf("  -o  : Print out matrix values.\n");
-              printf("  -h  : Print out command line options.\n\n");
-              printf("Default: LU -n%1d -p%1d -b%1d\n",
-		     DEFAULT_N,DEFAULT_THREADS,DEFAULT_B);
-              exit(0);
-              break;
+      case 'n': n = atoi(optarg); break;
+      case 'p': NumThreads = atoi(optarg);
+          IF_EXIT(NumThreads < 1, "NumThreads must be >= 1\n");
+          break;
+      case 'b': block_size = atoi(optarg); break;
+      case 'y': doprefetch = true; break;
+      case 't': test_result = true; break;
+      case 'o': doprint = true; break;
+      case 'h': printf("Usage: LU <options>\n\n");
+          printf("options:\n");
+          printf("  -nN : Decompose NxN matrix.\n");
+          printf("  -pNumThreads : NumThreads = number of processors.\n");
+          printf("  -bB : Use a block size of B. BxB elements should fit in cache for \n");
+          printf("        good performance. Small block sizes (B=8, B=16) work well.\n");
+          printf("  -y  : Enable touching the data before operations.\n");
+          printf("        It is not useful when measuring the full application or the ROI.\n");
+          printf("  -c  : Copy non-locally allocated blocks to local memory before use.\n");
+          printf("  -t  : Test output.\n");
+          printf("  -o  : Print out matrix values.\n");
+          printf("  -h  : Print out command line options.\n\n");
+          printf("Default: LU -n%1d -p%1d -b%1d\n", DEFAULT_N,DEFAULT_THREADS,DEFAULT_B);
+          exit(0);
+          break;
     }
   }
 }
-
 
 void ParallelMain() {
   long thread_id = FETCH_ADD(Global->id, 1);
   OneSolve(n, block_size, thread_id);
 }
-
 
 void OneSolve(long n, long block_size, long thread_id) {
   if (doprefetch) {
@@ -376,27 +363,27 @@ void lu(long n, long bs, long thread_id) {
     double* D = a[K+K*nblocks];
     for (long i = kl, I = K + 1; i < n; i += bs, I++) {
       if (BlockOwnerColumn(I, K) == thread_id) {  /* parcel out blocks */
-	long il = i + bs;
-	long strI = bs;
-	if (il > n) {
-	  il = n;
+	      long il = i + bs;
+	      long strI = bs;
+	      if (il > n) {
+	        il = n;
           strI = il - i;
         }
-	double* A = a[I+K*nblocks]; 
-	bdiv(A, D, strI, strK, strI, strK);  
+	      double* A = a[I+K*nblocks]; 
+	      bdiv(A, D, strI, strK, strI, strK);  
       }
     }
     /* modify row k by diagonal block */
     for (long j = kl, J = K + 1; j < n; j += bs, J++) {
       if (BlockOwnerRow(K, J) == thread_id) {  /* parcel out blocks */
-	long jl = j+bs;
-	long  strJ = bs;
-	if (jl > n) {
-	  jl = n;
+	      long jl = j+bs;
+	      long  strJ = bs;
+	      if (jl > n) {
+	        jl = n;
           strJ = jl - j;
         }
         double* A = a[K+J*nblocks];
-	bmodd(D, A, strK, strJ, strK, strK);
+	      bmodd(D, A, strK, strJ, strK, strK);
       }
     }
 
@@ -407,22 +394,22 @@ void lu(long n, long bs, long thread_id) {
       long il = i+bs;
       long strI = bs;
       if (il > n) {
-	il = n;
+	      il = n;
         strI = il - i;
       }
       double* A = a[I+K*nblocks]; 
       for (long j = kl, J = K + 1; j < n; j += bs, J++) {
-	long jl = j + bs;
-	long strJ = bs;
-	if (jl > n) {
-	  jl = n;
+	      long jl = j + bs;
+	      long strJ = bs;
+	      if (jl > n) {
+	        jl = n;
           strJ= jl - j;
         }
-	if (BlockOwner(I, J) == thread_id) {  /* parcel out blocks */
-	  double* B = a[K+J*nblocks]; 
-	  double* C = a[I+J*nblocks];
-	  bmod(A, B, C, strI, strJ, strK, strI, strK, strI);
-	}
+        if (BlockOwner(I, J) == thread_id) {  /* parcel out blocks */
+          double* B = a[K+J*nblocks]; 
+          double* C = a[I+J*nblocks];
+          bmod(A, B, C, strI, strJ, strK, strI, strK, strI);
+        }
       }
     }
   }
@@ -438,17 +425,17 @@ void InitA(double *rhs) {
       long jbs = block_size;
       long skip = block_size;
       if ((n - i) <= edge) {
-	ibs = n-edge;
-	skip = edge;
+	      ibs = n-edge;
+	      skip = edge;
       }
       if ((n - j) <= edge) {
-	jbs = n-edge;
+	      jbs = n-edge;
       }
       long ii = (i/block_size) + (j/block_size)*nblocks;
       long jj = (i%ibs)+(j%jbs)*skip;
       a[ii][jj] = ((double) lrand48())/MAXRAND;
       if (i == j) {
-	a[ii][jj] *= 10;
+	      a[ii][jj] *= 10;
       }
     }
   }
@@ -463,13 +450,13 @@ void InitA(double *rhs) {
       long jbs = block_size;
       long skip = block_size;
       if ((n - i) <= edge) {
-	ibs = edge;
-	ibs = n-edge;
-	skip = edge;
+	      ibs = edge;
+	      ibs = n-edge;
+	      skip = edge;
       }
       if ((n - j) <= edge) {
-	jbs = edge;
-	jbs = n-edge;
+	      jbs = edge;
+	      jbs = n-edge;
       }
       long ii = (i/block_size) + (j/block_size)*nblocks;
       long jj = (i%ibs)+(j%jbs)*skip;
@@ -486,25 +473,25 @@ double TouchA(long bs, long thread_id) {
   for (long J = 0; J < nblocks; J++) {
     for (long I = 0; I < nblocks; I++) {
       if (BlockOwner(I, J) == thread_id) {
-	long jbs = bs;
-	long ibs = bs;
-	if (J == nblocks-1) {
-	  jbs = n%bs;
-	  if (jbs == 0) {
-	    jbs = bs;
+        long jbs = bs;
+        long ibs = bs;
+        if (J == nblocks-1) {
+          jbs = n%bs;
+          if (jbs == 0) {
+            jbs = bs;
+                }
+        }
+        if (I == nblocks-1) {
+          ibs = n%bs;
+          if (ibs == 0) {
+            ibs = bs;
           }
-	}
-	if (I == nblocks-1) {
-	  ibs = n%bs;
-	  if (ibs == 0) {
-	    ibs = bs;
+	      }
+        for (long j = 0; j < jbs; j++) {
+          for (long i = 0; i < ibs; i++) {
+            tot += a[I+J*nblocks][i+j*ibs];
           }
-	}
-	for (long j = 0; j < jbs; j++) {
-	  for (long i = 0; i < ibs; i++) {
-	    tot += a[I+J*nblocks][i+j*ibs];
-          }
-	}
+        }
       }
     }
   } 
@@ -520,11 +507,11 @@ void PrintA() {
       long skip = block_size;
       long jbs = block_size;
       if ((n - i) <= edge) {
-	ibs = n-edge;
+	      ibs = n-edge;
         skip = edge;
       }
       if ((n - j) <= edge) {
-	jbs = n-edge;
+	      jbs = n-edge;
       }
       long ii = (i/block_size) + (j/block_size)*nblocks;
       long jj = (i%ibs)+(j%jbs)*skip;

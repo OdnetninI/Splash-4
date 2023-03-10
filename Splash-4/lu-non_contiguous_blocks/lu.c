@@ -36,21 +36,15 @@
 /*                                                                          */
 /****************************************************************************/
 
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdbool.h>
 #include "../common/common.h"
 
 MAIN_ENV();
 
-#define MAXRAND					32767.0
-#define DEFAULT_N				128
-#define DEFAULT_THREADS                         1
-#define DEFAULT_B				16
+#define MAXRAND                         32767.0
+#define DEFAULT_N                         128
+#define DEFAULT_THREADS                     1
+#define DEFAULT_B                          16
 #define min(a,b) ((a) < (b) ? (a) : (b))
-#define PAGE_SIZE				4096
 
 #define ERROR_ALLOWED                0.000001
 
@@ -73,6 +67,9 @@ bool test_result = false;        /* Test result of factorization? */
 bool doprint = false;            /* Print out matrix values? */
 bool doprefetch = false;     
 
+/*
+  Forward declarations
+*/
 void ArgumentParser(int argc, char* argv[]);
 void SlaveStart(void);
 void OneSolve(long n, long block_size, long MyNum);
@@ -91,6 +88,9 @@ void PrintA(void);
 void CheckResult(long n, double *a, double *rhs);
 void printerr(char *s);
 
+/*
+  Main
+ */
 int main(int argc, char *argv[]) {
   ArgumentParser(argc, argv);
 
@@ -121,9 +121,9 @@ int main(int argc, char *argv[]) {
 
   Global = (struct GlobalMemory *) G_MALLOC(sizeof(struct GlobalMemory));
 
-/* POSSIBLE ENHANCEMENT:  Here is where one might distribute the a
-   matrix data across physically distributed memories in a 
-   round-robin fashion as desired. */
+  /* POSSIBLE ENHANCEMENT:  Here is where one might distribute the a
+  matrix data across physically distributed memories in a 
+  round-robin fashion as desired. */
 
   BARINIT(Global->start, NumThreads);
   
@@ -159,28 +159,29 @@ void ArgumentParser(int argc, char* argv[]) {
   extern char *optarg;
   while ((ch = getopt(argc, argv, "n:p:b:cstoh")) != -1) {
     switch(ch) {
-    case 'n': n = atoi(optarg); break;
-    case 'p': NumThreads = atoi(optarg); break;
-    case 'b': block_size = atoi(optarg); break;
-    case 'y': doprefetch = true; break;
-    case 't': test_result = true; break;
-    case 'o': doprint = true; break;
-    case 'h': printf("Usage: LU <options>\n\n");
-	      printf("options:\n");
-              printf("  -nN : Decompose NxN matrix.\n");
-              printf("  -pNumThreads : NumThreads = number of processors.\n");
-              printf("  -bB : Use a block size of B. BxB elements should fit in cache for \n");
-              printf("        good performance. Small block sizes (B=8, B=16) work well.\n");
-	      printf("  -y  : Enable touching the data before operations.\n");
-	      printf("        It is not useful when measuring the full application or the ROI.\n");
-              printf("  -c  : Copy non-locally allocated blocks to local memory before use.\n");
-              printf("  -t  : Test output.\n");
-              printf("  -o  : Print out matrix values.\n");
-              printf("  -h  : Print out command line options.\n\n");
-              printf("Default: LU -n%1d -p%1d -b%1d\n",
-		     DEFAULT_N,DEFAULT_THREADS,DEFAULT_B);
-              exit(0);
-              break;
+      case 'n': n = atoi(optarg); break;
+      case 'p': NumThreads = atoi(optarg);
+          IF_EXIT(NumThreads < 1, "NumThreads must be >= 1\n");
+          break;
+      case 'b': block_size = atoi(optarg); break;
+      case 'y': doprefetch = true; break;
+      case 't': test_result = true; break;
+      case 'o': doprint = true; break;
+      case 'h': printf("Usage: LU <options>\n\n");
+          printf("options:\n");
+          printf("  -nN : Decompose NxN matrix.\n");
+          printf("  -pNumThreads : NumThreads = number of processors.\n");
+          printf("  -bB : Use a block size of B. BxB elements should fit in cache for \n");
+          printf("        good performance. Small block sizes (B=8, B=16) work well.\n");
+          printf("  -y  : Enable touching the data before operations.\n");
+          printf("        It is not useful when measuring the full application or the ROI.\n");
+          printf("  -c  : Copy non-locally allocated blocks to local memory before use.\n");
+          printf("  -t  : Test output.\n");
+          printf("  -o  : Print out matrix values.\n");
+          printf("  -h  : Print out command line options.\n\n");
+          printf("Default: LU -n%1d -p%1d -b%1d\n", DEFAULT_N,DEFAULT_THREADS,DEFAULT_B);
+          exit(0);
+          break;
     }
   }
 }
@@ -268,17 +269,14 @@ long BlockOwnerRow(long I, long J) {
 }
 
 void lu(long n, long bs, long MyNum) {
-  long i, il, j, jl, k, kl, I, J, K;
-  double *A, *B, *C, *D;
-  long strI;
-  unsigned long t1, t2, t3, t4, t11, t22;
-
-  strI = n;
-  for (k=0, K=0; k<n; k+=bs, K++) {
-    kl = k+bs; 
+  long strI = n;
+  for (long k = 0, K = 0; k < n; k += bs, K++) {
+    long kl = k+bs; 
     if (kl>n) {
       kl = n;
     }
+
+    double* A;
 
     /* factor diagonal block */
     if (BlockOwner(K, K) == MyNum) {
@@ -289,11 +287,10 @@ void lu(long n, long bs, long MyNum) {
     BARRIER(Global->start, NumThreads);
 
     /* divide column k by diagonal block */
-    D = &(a[k+k*n]);
-    for (i=kl, I=K+1; i<n; i+=bs, I++) {
+    double* D = &(a[k+k*n]);
+    for (long i = kl, I = K + 1; i < n; i += bs, I++) {
       if (BlockOwner/*Column*/(I, K) == MyNum) {  /* parcel out blocks */
-	      /*if (K == 0) printf("C%lx\n", BlockOwnerColumn(I, K));*/
-        il = i + bs;
+        long il = i + bs;
         if (il > n) {
           il = n;
         }
@@ -302,10 +299,9 @@ void lu(long n, long bs, long MyNum) {
       }
     }
     /* modify row k by diagonal block */
-    for (j=kl, J=K+1; j<n; j+=bs, J++) {
+    for (long j = kl, J = K + 1; j < n; j += bs, J++) {
       if (BlockOwner/*Row*/(K, J) == MyNum) {  /* parcel out blocks */
-	      /*if (K == 0) printf("R%lx\n", BlockOwnerRow(K, J));*/
-        jl = j+bs;
+        long jl = j+bs;
         if (jl > n) {
           jl = n;
         }
@@ -317,21 +313,20 @@ void lu(long n, long bs, long MyNum) {
     BARRIER(Global->start, NumThreads);
 
     /* modify subsequent block columns */
-    for (i=kl, I=K+1; i<n; i+=bs, I++) {
-      il = i+bs;
+    for (long i = kl, I = K + 1; i < n; i += bs, I++) {
+      long il = i + bs;
       if (il > n) {
         il = n;
       }
       A = &(a[i+k*n]);
-      for (j=kl, J=K+1; j<n; j+=bs, J++) {
-        jl = j + bs;
+      for (long j = kl, J = K + 1; j < n; j += bs, J++) {
+        long jl = j + bs;
         if (jl > n) {
           jl = n;
         }
         if (BlockOwner(I, J) == MyNum) {  /* parcel out blocks */
-//		if (K == 0) printf("%lx\n", BlockOwner(I, J));
-          B = &(a[k+j*n]);
-          C = &(a[i+j*n]);
+          double* B = &(a[k+j*n]);
+          double* C = &(a[i+j*n]);
           bmod(A, B, C, il-i, jl-j, kl-k, n);
         }
       }

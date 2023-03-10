@@ -43,10 +43,6 @@
 /*                                                                          */
 /****************************************************************************/
 
-#include <stdio.h>
-#include <math.h>
-#include <unistd.h>
-
 #include "../common/common.h"
 
 #define PAGE_SIZE               4096
@@ -245,13 +241,9 @@ int main(int argc, char *argv[]) {
   if (test_result) {
     double ck3 = CheckSum(x);
     printf("              INVERSE FFT TEST RESULTS\n");
-    printf("Checksum difference is %.3f (%.3f, %.3f)\n",
-	   ck1-ck3, ck1, ck3);
-    if (fabs(ck1-ck3) < ERROR_ALLOWED) {
-      printf("TEST PASSED\n");
-    } else {
-      printf("TEST FAILED\n");
-    }
+    printf("Checksum difference is %.3f (%.3f, %.3f)\n", ck1-ck3, ck1, ck3);
+    if (fabs(ck1-ck3) < ERROR_ALLOWED) printf("TEST PASSED\n");
+    else printf("TEST FAILED\n");
   }
 
   MAIN_END();
@@ -264,51 +256,44 @@ void ArgumentParser(int argc, char* argv[]) {
   while ((c = getopt(argc, argv, "p:m:n:l:stoh")) != -1) {
     switch(c) {
       case 'p':
-	NumThreads = atoi(optarg);
-	IF_EXIT(NumThreads < 1, "NumThreads must be >= 1\n");
-	IF_EXIT(NumThreads != (1 << LOG2(NumThreads)), "NumThreads must be a power of 2\n");
-	break;  
+          NumThreads = atoi(optarg);
+          IF_EXIT(NumThreads < 1, "NumThreads must be >= 1\n");
+          IF_EXIT(NumThreads != (1 << LOG2(NumThreads)), "NumThreads must be a power of 2\n");
+	        break;  
       case 'm':
-	M = atoi(optarg);
-	long m1 = M >> 1;
-	IF_EXIT((m1 << 1) != M, "M must be even\n");
-	break;  
+          M = atoi(optarg);
+          long m1 = M >> 1;
+          IF_EXIT((m1 << 1) != M, "M must be even\n");
+          break;  
       case 'n':
-	num_cache_lines = atoi(optarg); 
-	orig_num_lines = num_cache_lines;
-	IF_EXIT(num_cache_lines < 1, "Number of cache lines must be >= 1\n")
-	break;  
+          num_cache_lines = atoi(optarg); 
+          orig_num_lines = num_cache_lines;
+          IF_EXIT(num_cache_lines < 1, "Number of cache lines must be >= 1\n")
+          break;
       case 'l':
-	log2_line_size = atoi(optarg); 
-	IF_EXIT(log2_line_size < 0, "Log base 2 of cache line length in bytes must be >= 0\n");
-	break;  
-      case 'y':
-	doprefetch = true; 
-	break;
-      case 't':
-	test_result = true; 
-	break;
-      case 'o':
-	doprint = true; 
-	break;
+          log2_line_size = atoi(optarg); 
+          IF_EXIT(log2_line_size < 0, "Log base 2 of cache line length in bytes must be >= 0\n");
+          break;  
+      case 'y': doprefetch = true; break;
+      case 't': test_result = true; break;
+      case 'o': doprint = true; break;
       case 'h':
-	printf("Usage: FFT <options>\n\n");
-	printf("options:\n");
-	printf("  -mM : M = even integer; 2**M total complex data points transformed.\n");
-	printf("  -pNumThreads : NumThreads = number of processors; Must be a power of 2.\n");
-	printf("  -nN : N = number of cache lines.\n");
-	printf("  -lL : L = Log base 2 of cache line length in bytes.\n");
-	printf("  -y  : Enable touching the data before operations.\n");
-	printf("        It is not useful when measuring the full application or the ROI.\n");
-	printf("  -t  : Perform FFT and inverse FFT.  Test output by comparing the\n");
-	printf("        integral of the original data to the integral of the data that\n");
-	printf("        results from performing the FFT and inverse FFT.\n");
-	printf("  -o  : Print out complex data points.\n");
-	printf("  -h  : Print out command line options.\n\n");
-	printf("Default: FFT -m%1d -p%1d -n%1d -l%1d\n",
-	       DEFAULT_M,DEFAULT_THREADS,NUM_CACHE_LINES,LOG2_LINE_SIZE);
-	exit(0);
-	break;
+          printf("Usage: FFT <options>\n\n");
+          printf("options:\n");
+          printf("  -mM : M = even integer; 2**M total complex data points transformed.\n");
+          printf("  -pNumThreads : NumThreads = number of processors; Must be a power of 2.\n");
+          printf("  -nN : N = number of cache lines.\n");
+          printf("  -lL : L = Log base 2 of cache line length in bytes.\n");
+          printf("  -y  : Enable touching the data before operations.\n");
+          printf("        It is not useful when measuring the full application or the ROI.\n");
+          printf("  -t  : Perform FFT and inverse FFT.  Test output by comparing the\n");
+          printf("        integral of the original data to the integral of the data that\n");
+          printf("        results from performing the FFT and inverse FFT.\n");
+          printf("  -o  : Print out complex data points.\n");
+          printf("  -h  : Print out command line options.\n\n");
+          printf("Default: FFT -m%1d -p%1d -n%1d -l%1d\n", DEFAULT_M,DEFAULT_THREADS,NUM_CACHE_LINES,LOG2_LINE_SIZE);
+          exit(0);
+          break;
     }
   }
 }
@@ -503,12 +488,12 @@ void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst,
     for (long k = 0; k < numblks; k++) {
       long v_off = l * row_count + k * blksize;
       for (long m = 0; m < numblks; m++) {
-	long h_off = firstfirst + m * blksize;
+	      long h_off = firstfirst + m * blksize;
         for (long i = 0; i < blksize; i++) {
-	  long v = v_off + i; 
+	        long v = v_off + i; 
           for (long j = 0; j < blksize; j++) {
             iter_num ++;
-	    long h = h_off + j;
+	          long h = h_off + j;
             dest[(h*n1p+v) << 1] = src[(v*n1p+h) << 1];
             dest[((h*n1p+v) << 1)+1] = src[((v*n1p+h) << 1)+1];
           }
@@ -525,9 +510,9 @@ void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst,
     for (long k = 0; k < numblks; k++) {
       long v_off = l * row_count + k * blksize;
       for (long m = 0; m < numblks; m++) {
-	long h_off = firstfirst + m * blksize;
+	      long h_off = firstfirst + m * blksize;
         for (long i = 0; i < blksize; i++) {
-	  long v = v_off + i;
+	        long v = v_off + i;
           for (long j = 0; j < blksize; j++) {
             long h = h_off + j;
             dest[(h*n1p+v) << 1] = src[(v*n1p+h) << 1];
@@ -548,7 +533,7 @@ void Transpose(long n1, double* src, double* dest, long thread_id, long MyFirst,
           long h = h_off + j;
           dest[(h*n1p+v) << 1] = src[(v*n1p+h) << 1];
           dest[((h*n1p+v) << 1)+1] = src[((v*n1p+h) << 1)+1];
-	}
+	      }
       }
     }
   }
@@ -589,18 +574,18 @@ void FFT1DOnce(long direction, long M, long N, double* u, double* x) {
       double* x2 = &x[(k*L+Lstar) << 1];
       for (long j = 0; j < Lstar; j++) {
         iter_num ++;
-	double omega_r = u1[j << 1]; 
+        double omega_r = u1[j << 1]; 
         double omega_c = direction*u1[(j << 1)+1];
-	double x_r = x2[j << 1]; 
+        double x_r = x2[j << 1]; 
         double x_c = x2[(j << 1)+1];
-	double tau_r = omega_r*x_r - omega_c*x_c;
-	double tau_c = omega_r*x_c + omega_c*x_r;
-	x_r = x1[j << 1]; 
+        double tau_r = omega_r*x_r - omega_c*x_c;
+        double tau_c = omega_r*x_c + omega_c*x_r;
+        x_r = x1[j << 1]; 
         x_c = x1[(j << 1)+1];
-	x2[j << 1] = x_r - tau_r;
-	x2[(j << 1)+1] = x_c - tau_c;
-	x1[j << 1] = x_r + tau_r;
-	x1[(j << 1)+1] = x_c + tau_c;
+        x2[j << 1] = x_r - tau_r;
+        x2[(j << 1)+1] = x_c - tau_c;
+        x1[j << 1] = x_r + tau_r;
+        x1[(j << 1)+1] = x_c + tau_c;
       }
     }
   }
