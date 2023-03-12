@@ -1,7 +1,7 @@
 /****************************************************************************/
 /*                                                                          */
 /*  Copyright (c) 2023 Eduardo Jose Gomez-Hernandez (University of Murcia)  */
-/*  - Rewritten from Splash-3 M4 macros
+/*  - Rewritten from Splash-3 M4 macros                                     */
 /*                                                                          */
 /*  All rights reserved.                                                    */
 /*                                                                          */
