@@ -1,18 +1,19 @@
-/*************************************************************************/
-/*                                                                       */
-/*  Copyright (c) 1994 Stanford University                               */
-/*                                                                       */
-/*  All rights reserved.                                                 */
-/*                                                                       */
-/*  Permission is given to use, copy, and modify this software for any   */
-/*  non-commercial purpose as long as this copyright notice is not       */
-/*  removed.  All other uses, including redistribution in whole or in    */
-/*  part, are forbidden without prior written permission.                */
-/*                                                                       */
-/*  This software is provided with absolutely no warranty and no         */
-/*  support.                                                             */
-/*                                                                       */
-/*************************************************************************/
+/****************************************************************************/
+/*                                                                          */
+/*  Copyright (c) 2023 Eduardo Jose Gomez-Hernandez (University of Murcia)  */       
+/*  Copyright (c) 1994 Stanford University                                  */
+/*                                                                          */
+/*  All rights reserved.                                                    */
+/*                                                                          */
+/*  Permission is given to use, copy, and modify this software for any      */
+/*  non-commercial purpose as long as this copyright notice is not          */
+/*  removed.  All other uses, including redistribution in whole or in       */
+/*  part, are forbidden without prior written permission.                   */
+/*                                                                          */
+/*  This software is provided with absolutely no warranty and no            */
+/*  support.                                                                */
+/*                                                                          */
+/****************************************************************************/
 
 /* Does the arakawa jacobian calculation (of the x and y matrices,
    putting the results in the z matrix) for a subblock.  */
@@ -20,13 +21,9 @@
 
 EXTERN_ENV();
 
-#include <stdio.h>
-#include <math.h>
-#include <time.h>
 #include "decs.h"
 
-void jacobcalc(double ***x, double ***y, double ***z, long pid, long firstrow, long lastrow, long firstcol, long lastcol)
-{
+void jacobcalc(double ***x, double ***y, double ***z, long pid, long firstrow, long lastrow, long firstcol, long lastcol) {
    double f1;
    double f2;
    double f3;
@@ -43,7 +40,6 @@ void jacobcalc(double ***x, double ***y, double ***z, long pid, long firstrow, l
    long i;
    long j;
    long jj;
-   double **t2a;
    double **t2b;
    double **t2c;
    double *t1a;
@@ -54,58 +50,58 @@ void jacobcalc(double ***x, double ***y, double ***z, long pid, long firstrow, l
    double *t1f;
    double *t1g;
 
-   t2a = (double **) z[pid];
-   if ((gp[pid].neighbors[UP] == -1) && (gp[pid].neighbors[LEFT] == -1)) {
-     t2a[0][0]=0.0;
-   }
-   if ((gp[pid].neighbors[DOWN] == -1) && (gp[pid].neighbors[LEFT] == -1)) {
-     t2a[im-1][0]=0.0;
-   }
-   if ((gp[pid].neighbors[UP] == -1) && (gp[pid].neighbors[RIGHT] == -1)) {
-     t2a[0][jm-1]=0.0;
-   }
-   if ((gp[pid].neighbors[DOWN] == -1) && (gp[pid].neighbors[RIGHT] == -1)) {
-     t2a[im-1][jm-1]=0.0;
-   }
+  double** t2a = (double **) z[pid];
+  if ((gp[pid].neighbors[UP] == -1) && (gp[pid].neighbors[LEFT] == -1)) {
+    t2a[0][0]=0.0;
+  }
+  if ((gp[pid].neighbors[DOWN] == -1) && (gp[pid].neighbors[LEFT] == -1)) {
+    t2a[im-1][0]=0.0;
+  }
+  if ((gp[pid].neighbors[UP] == -1) && (gp[pid].neighbors[RIGHT] == -1)) {
+    t2a[0][jm-1]=0.0;
+  }
+  if ((gp[pid].neighbors[DOWN] == -1) && (gp[pid].neighbors[RIGHT] == -1)) {
+    t2a[im-1][jm-1]=0.0;
+  }
 
-   t2a = (double **) x[pid];
-   jj = gp[pid].neighbors[UPLEFT];
-   if (jj != -1) {
-     t2a[0][0]=x[jj][im-2][jm-2];
-   }
-   jj = gp[pid].neighbors[UPRIGHT];
-   if (jj != -1) {
-     t2a[0][jm-1]=x[jj][im-2][1];
-   }
-   jj = gp[pid].neighbors[DOWNLEFT];
-   if (jj != -1) {
-     t2a[im-1][0]=x[jj][1][jm-2];
-   }
-   jj = gp[pid].neighbors[DOWNRIGHT];
-   if (jj != -1) {
-     t2a[im-1][jm-1]=x[jj][1][1];
-   }
+  t2a = (double **) x[pid];
+  jj = gp[pid].neighbors[UPLEFT];
+  if (jj != -1) {
+    t2a[0][0]=x[jj][im-2][jm-2];
+  }
+  jj = gp[pid].neighbors[UPRIGHT];
+  if (jj != -1) {
+    t2a[0][jm-1]=x[jj][im-2][1];
+  }
+  jj = gp[pid].neighbors[DOWNLEFT];
+  if (jj != -1) {
+    t2a[im-1][0]=x[jj][1][jm-2];
+  }
+  jj = gp[pid].neighbors[DOWNRIGHT];
+  if (jj != -1) {
+    t2a[im-1][jm-1]=x[jj][1][1];
+  }
 
-   t2a = (double **) y[pid];
-   jj = gp[pid].neighbors[UPLEFT];
-   if (jj != -1) {
-     t2a[0][0]=y[jj][im-2][jm-2];
-   }
-   jj = gp[pid].neighbors[UPRIGHT];
-   if (jj != -1) {
-     t2a[0][jm-1]=y[jj][im-2][1];
-   }
-   jj = gp[pid].neighbors[DOWNLEFT];
-   if (jj != -1) {
-     t2a[im-1][0]=y[jj][1][jm-2];
-   }
-   jj = gp[pid].neighbors[DOWNRIGHT];
-   if (jj != -1) {
-     t2a[im-1][jm-1]=y[jj][1][1];
-   }
-
-   t2a = (double **) x[pid];
-   if (gp[pid].neighbors[UP] == -1) {
+  t2a = (double **) y[pid];
+  jj = gp[pid].neighbors[UPLEFT];
+  if (jj != -1) {
+    t2a[0][0]=y[jj][im-2][jm-2];
+  }
+  jj = gp[pid].neighbors[UPRIGHT];
+  if (jj != -1) {
+    t2a[0][jm-1]=y[jj][im-2][1];
+  }
+  jj = gp[pid].neighbors[DOWNLEFT];
+  if (jj != -1) {
+    t2a[im-1][0]=y[jj][1][jm-2];
+  }
+  jj = gp[pid].neighbors[DOWNRIGHT];
+  if (jj != -1) {
+    t2a[im-1][jm-1]=y[jj][1][1];
+  }
+  
+  t2a = (double **) x[pid];
+  if (gp[pid].neighbors[UP] == -1) {
      jj = gp[pid].neighbors[LEFT];
      if (jj != -1) {
        t2a[0][0] = x[jj][0][jm-2];

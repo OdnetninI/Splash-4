@@ -1,18 +1,19 @@
-/*************************************************************************/
-/*                                                                       */
-/*  Copyright (c) 1994 Stanford University                               */
-/*                                                                       */
-/*  All rights reserved.                                                 */
-/*                                                                       */
-/*  Permission is given to use, copy, and modify this software for any   */
-/*  non-commercial purpose as long as this copyright notice is not       */
-/*  removed.  All other uses, including redistribution in whole or in    */
-/*  part, are forbidden without prior written permission.                */
-/*                                                                       */
-/*  This software is provided with absolutely no warranty and no         */
-/*  support.                                                             */
-/*                                                                       */
-/*************************************************************************/
+/****************************************************************************/
+/*                                                                          */
+/*  Copyright (c) 2023 Eduardo Jose Gomez-Hernandez (University of Murcia)  */       
+/*  Copyright (c) 1994 Stanford University                                  */
+/*                                                                          */
+/*  All rights reserved.                                                    */
+/*                                                                          */
+/*  Permission is given to use, copy, and modify this software for any      */
+/*  non-commercial purpose as long as this copyright notice is not          */
+/*  removed.  All other uses, including redistribution in whole or in       */
+/*  part, are forbidden without prior written permission.                   */
+/*                                                                          */
+/*  This software is provided with absolutely no warranty and no            */
+/*  support.                                                                */
+/*                                                                          */
+/****************************************************************************/
 
 /*    ****************
       subroutine slave
@@ -21,69 +22,16 @@
 
 EXTERN_ENV();
 
-#include <stdio.h>
-#include <math.h>
-#include <time.h>
-#include <stdlib.h>
 #include "decs.h"
 
-void slave()
-{
-   long i;
-   long j;
-   long nstep;
-   long iindex;
-   long iday;
-   double ysca1;
-   double y;
-   double factor;
-   double sintemp;
-   double curlt;
-   double ressqr;
-   long istart;
-   long iend;
-   long jstart;
-   long jend;
-   long ist;
-   long ien;
-   long jst;
-   long jen;
-   double fac;
-   long dayflag=0;
-   long dhourflag=0;
-   long endflag=0;
-   long firstrow;
-   long lastrow;
-   long numrows;
-   long firstcol;
-   long lastcol;
-   long numcols;
-   long psiindex;
-   double psibipriv;
-   double ttime;
-   double dhour;
-   double day;
-   long procid;
-   long psinum;
-   long j_off = 0;
-   unsigned long t1;
-   double **t2a;
-   double **t2b;
-   double *t1a;
-   double *t1b;
-   double *t1c;
-   double *t1d;
+void slave() {
+  double ressqr = lev_res[numlev-1] * lev_res[numlev-1];
+  long procid = FETCH_ADD(global->id, 1);
 
-   ressqr = lev_res[numlev-1] * lev_res[numlev-1];
-
-   procid = FETCH_ADD(global->id, 1);
-   
-   BARRIER(bars->sl_prini,nprocs);
-
-/* POSSIBLE ENHANCEMENT:  Here is where one might pin processes to
+  /* POSSIBLE ENHANCEMENT:  Here is where one might pin processes to
    processors to avoid migration. */
 
-/* POSSIBLE ENHANCEMENT:  Here is where one might distribute
+  /* POSSIBLE ENHANCEMENT:  Here is where one might distribute
    data structures across physically distributed memories as
    desired.
 
@@ -96,8 +44,7 @@ void slave()
    unsigned long mg_size;
 
    if (procid == MASTER) {
-     g_size = ((jmx[numlev-1]-2)/xprocs+2)*((imx[numlev-1]-2)/yprocs+2)*siz
-eof(double) +
+     g_size = ((jmx[numlev-1]-2)/xprocs+2)*((imx[numlev-1]-2)/yprocs+2)*sizeof(double) +
               ((imx[numlev-1]-2)/yprocs+2)*sizeof(double *);
 
      mg_size = numlev*sizeof(double **);
@@ -157,662 +104,292 @@ eof(double) +
      }
    }
 
-*/
+  */
 
-   t2a = (double **) oldga[procid];
-   t2b = (double **) oldgb[procid];
-   for (i=0;i<im;i++) {
-     t1a = (double *) t2a[i];
-     t1b = (double *) t2b[i];
-     for (j=0;j<jm;j++) {
-        t1a[j] = 0.0;
-        t1b[j] = 0.0;
-     }
-   }
+  double** t2a = (double **) oldga[procid];
+  double** t2b = (double **) oldgb[procid];
+  for (long i = 0; i < im; i++) {
+    double* t1a = (double *) t2a[i];
+    double* t1b = (double *) t2b[i];
+    for (long j = 0; j < jm; j++) {
+       t1a[j] = 0.0;
+       t1b[j] = 0.0;
+    }
+  }
 
-   firstcol = 1;
-   lastcol = firstcol + gp[procid].rel_num_x[numlev-1] - 1;
-   firstrow = 1;
-   lastrow = firstrow + gp[procid].rel_num_y[numlev-1] - 1;
-   numcols = gp[procid].rel_num_x[numlev-1];
-   numrows = gp[procid].rel_num_y[numlev-1];
-   j_off = gp[procid].colnum*numcols;
+  long firstcol = 1;
+  long lastcol = firstcol + gp[procid].rel_num_x[numlev-1] - 1;
+  long firstrow = 1;
+  long lastrow = firstrow + gp[procid].rel_num_y[numlev-1] - 1;
+  long numcols = gp[procid].rel_num_x[numlev-1];
+  long numrows = gp[procid].rel_num_y[numlev-1];
+  long j_off = gp[procid].colnum*numcols;
 
-   if (procid > nprocs/2) {
-      psinum = 2;
-   } else {
-      psinum = 1;
-   }
-
-/* every process gets its own copy of the timing variables to avoid
+  /* every process gets its own copy of the timing variables to avoid
    contention at shared memory locations.  here, these variables
    are initialized.  */
 
-   ttime = 0.0;
-   dhour = 0.0;
-   nstep = 0 ;
-   day = 0.0;
+  double ttime = 0.0;
+  double dhour = 0.0;
+  long nstep = 0 ;
+  double day = 0.0;
 
-   ysca1 = 0.5*ysca;
-   if (procid == MASTER) {
-     t1a = (double *) f;
-     for (iindex = 0;iindex<=jmx[numlev-1]-1;iindex++) {
-       y = ((double) iindex)*res;
-       t1a[iindex] = f0+beta*(y-ysca1);
-     }
-   }
+  double ysca1 = 0.5*ysca;
+  if (procid == MASTER) {
+    double* t1a = (double *) f;
+    for (long iindex = 0;iindex<=jmx[numlev-1]-1;iindex++) {
+      double y = ((double) iindex)*res;
+      t1a[iindex] = f0+beta*(y-ysca1);
+    }
+  }
 
-   t2a = (double **) psium[procid];
-   if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-     t2a[0][0]=0.0;
-   }
-   if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-     t2a[im-1][0]=0.0;
-   }
-   if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-     t2a[0][jm-1]=0.0;
-   }
-   if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-     t2a[im-1][jm-1]=0.0;
-   }
-   if (gp[procid].neighbors[UP] == -1) {
-     t1a = (double *) t2a[0];
-     for(j=firstcol;j<=lastcol;j++) {
-       t1a[j] = 0.0;
-     }
-   }
-   if (gp[procid].neighbors[DOWN] == -1) {
-     t1a = (double *) t2a[im-1];
-     for(j=firstcol;j<=lastcol;j++) {
-       t1a[j] = 0.0;
-     }
-   }
-   if (gp[procid].neighbors[LEFT] == -1) {
-     for(j=firstrow;j<=lastrow;j++) {
-       t2a[j][0] = 0.0;
-     }
-   }
-   if (gp[procid].neighbors[RIGHT] == -1) {
-     for(j=firstrow;j<=lastrow;j++) {
-       t2a[j][jm-1] = 0.0;
-     }
-   }
+  initializeWithBorders(psium[procid], gp[procid].neighbors, firstrow, lastrow, firstcol, lastcol, 0.0D);
+  initializeWithBorders(psilm[procid], gp[procid].neighbors, firstrow, lastrow, firstcol, lastcol, 0.0D);
+  initializeWithBorders(psib[procid], gp[procid].neighbors, firstrow, lastrow, firstcol, lastcol, 1.0D);
 
-   for(i=firstrow;i<=lastrow;i++) {
-     t1a = (double *) t2a[i];
-     for(iindex=firstcol;iindex<=lastcol;iindex++) {
-       t1a[iindex] = 0.0;
-     }
-   }
-   t2a = (double **) psilm[procid];
-   if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-     t2a[0][0]=0.0;
-   }
-   if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-     t2a[im-1][0]=0.0;
-   }
-   if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-     t2a[0][jm-1]=0.0;
-   }
-   if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-     t2a[im-1][jm-1]=0.0;
-   }
-   if (gp[procid].neighbors[UP] == -1) {
-     t1a = (double *) t2a[0];
-     for(j=firstcol;j<=lastcol;j++) {
-       t1a[j] = 0.0;
-     }
-   }
-   if (gp[procid].neighbors[DOWN] == -1) {
-     t1a = (double *) t2a[im-1];
-     for(j=firstcol;j<=lastcol;j++) {
-       t1a[j] = 0.0;
-     }
-   }
-   if (gp[procid].neighbors[LEFT] == -1) {
-     for(j=firstrow;j<=lastrow;j++) {
-       t2a[j][0] = 0.0;
-     }
-   }
-   if (gp[procid].neighbors[RIGHT] == -1) {
-     for(j=firstrow;j<=lastrow;j++) {
-       t2a[j][jm-1] = 0.0;
-     }
-   }
-   for(i=firstrow;i<=lastrow;i++) {
-     t1a = (double *) t2a[i];
-     for(iindex=firstcol;iindex<=lastcol;iindex++) {
-       t1a[iindex] = 0.0;
-     }
-   }
+  /* compute psib array (one-time computation) and integrate into psibi */
 
-   t2a = (double **) psib[procid];
-   if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-     t2a[0][0]=1.0;
-   }
-   if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-     t2a[0][jm-1]=1.0;
-   }
-   if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-     t2a[im-1][0]=1.0;
-   }
-   if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-     t2a[im-1][jm-1]=1.0;
-   }
-   if (gp[procid].neighbors[UP] == -1) {
-     t1a = (double *) t2a[0];
-     for(j=firstcol;j<=lastcol;j++) {
-       t1a[j] = 1.0;
-     }
-   }
-   if (gp[procid].neighbors[DOWN] == -1) {
-     t1a = (double *) t2a[im-1];
-     for(j=firstcol;j<=lastcol;j++) {
-       t1a[j] = 1.0;
-     }
-   }
-   if (gp[procid].neighbors[LEFT] == -1) {
-     for(j=firstrow;j<=lastrow;j++) {
-       t2a[j][0] = 1.0;
-     }
-   }
-   if (gp[procid].neighbors[RIGHT] == -1) {
-     for(j=firstrow;j<=lastrow;j++) {
-       t2a[j][jm-1] = 1.0;
-     }
-   }
-   for(i=firstrow;i<=lastrow;i++) {
-     t1a = (double *) t2a[i];
-     for(iindex=firstcol;iindex<=lastcol;iindex++) {
-       t1a[iindex] = 0.0;
-     }
-   }
+  long istart = 1;
+  long iend = istart + gp[procid].rel_num_y[numlev-1] - 1;
+  long jstart = 1;
+  long jend = jstart + gp[procid].rel_num_x[numlev-1] - 1;
+  long ist = istart;
+  long ien = iend;
+  long jst = jstart;
+  long jen = jend;
 
-/* wait until all processes have completed the above initialization  */
+  if (gp[procid].neighbors[UP] == -1)  istart = 0;
+  if (gp[procid].neighbors[LEFT] == -1) jstart = 0;
+  if (gp[procid].neighbors[DOWN] == -1)  iend = im-1;
+  if (gp[procid].neighbors[RIGHT] == -1)  jend = jm-1;
 
-   BARRIER(bars->sl_prini,nprocs)
+  double** my_rhs_multi = (double **) rhs_multi[procid][numlev-1];
+  double** my_psib = (double **) psib[procid];
 
-/* compute psib array (one-time computation) and integrate into psibi */
+  for(long i = istart; i <= iend; i++) {
+    double* a = (double *) my_rhs_multi[i];
+    double* b = (double *) my_psib[i];
+    for(long j = jstart; j <= jend; j++) {
+      a[j] = b[j] * ressqr;
+    }
+  }
 
-   istart = 1;
-   iend = istart + gp[procid].rel_num_y[numlev-1] - 1;
-   jstart = 1;
-   jend = jstart + gp[procid].rel_num_x[numlev-1] - 1;
-   ist = istart;
-   ien = iend;
-   jst = jstart;
-   jen = jend;
+  double** my_q_multi = (double **) q_multi[procid][numlev-1];
+  if (gp[procid].neighbors[UP] == -1) {
+    double* a = (double *) my_q_multi[0];
+    double* b = (double *) my_psib[0];
+    for(long j = jstart; j <= jend; j++) {
+      a[j] = b[j];
+    }
+  }
+  if (gp[procid].neighbors[DOWN] == -1) {
+    double* a = (double *) my_q_multi[im-1];
+    double* b = (double *) my_psib[im-1];
+    for(long j = jstart; j <= jend; j++) {
+      a[j] = b[j];
+    }
+  }
+  if (gp[procid].neighbors[LEFT] == -1) {
+    for(long i = istart; i <= iend; i++) {
+      my_q_multi[i][0] = my_psib[i][0];
+    }
+  }
+  if (gp[procid].neighbors[RIGHT] == -1) {
+    for(long i = istart; i <= iend; i++) {
+      my_q_multi[i][jm-1] = my_psib[i][jm-1];
+    }
+  }
 
-   if (gp[procid].neighbors[UP] == -1) {
-     istart = 0;
-   }
-   if (gp[procid].neighbors[LEFT] == -1) {
-     jstart = 0;
-   }
-   if (gp[procid].neighbors[DOWN] == -1) {
-     iend = im-1;
-   }
-   if (gp[procid].neighbors[RIGHT] == -1) {
-     jend = jm-1;
-   }
+  long up = gp[procid].neighbors[UP];
+  if (up != -1) {
+    double* a = (double *) my_psib[0];
+    double* b = (double *) psib[up][im-2];
+    for (long i = 1; i < jm-1; i++) {
+      a[i] = b[i];
+    }
+  }
+  long down = gp[procid].neighbors[DOWN];
+  if (down != -1) {
+    double* a = (double *) my_psib[im-1];
+    double* b = (double *) psib[down][1];
+    for (long i = 1; i < jm-1; i++) {
+      a[i] = b[i];
+    }
+  }
+  long left = gp[procid].neighbors[LEFT];
+  if (left != -1) {
+    double** b = (double **) psib[left];
+    for (long i = 1; i < im-1; i++) {
+      my_psib[i][0] = b[i][jm-2];
+    }
+  }
+  long right = gp[procid].neighbors[RIGHT];
+  if (right != -1) {
+    double** b = (double **) psib[right];
+    for (long i = 1; i < im-1; i++) {
+      my_psib[i][jm-1] = b[i][1];
+    }
+  }
 
-   t2a = (double **) rhs_multi[procid][numlev-1];
-   t2b = (double **) psib[procid];
-   for(i=istart;i<=iend;i++) {
-     t1a = (double *) t2a[i];
-     t1b = (double *) t2b[i];
-     for(j=jstart;j<=jend;j++) {
-       t1a[j] = t1b[j] * ressqr;
-     }
-   }
-   t2a = (double **) q_multi[procid][numlev-1];
-   if (gp[procid].neighbors[UP] == -1) {
-     t1a = (double *) t2a[0];
-     t1b = (double *) t2b[0];
-     for(j=jstart;j<=jend;j++) {
-       t1a[j] = t1b[j];
-     }
-   }
-   if (gp[procid].neighbors[DOWN] == -1) {
-     t1a = (double *) t2a[im-1];
-     t1b = (double *) t2b[im-1];
-     for(j=jstart;j<=jend;j++) {
-       t1a[j] = t1b[j];
-     }
-   }
-   if (gp[procid].neighbors[LEFT] == -1) {
-     for(i=istart;i<=iend;i++) {
-       t2a[i][0] = t2b[i][0];
-     }
-   }
-   if (gp[procid].neighbors[RIGHT] == -1) {
-     for(i=istart;i<=iend;i++) {
-       t2a[i][jm-1] = t2b[i][jm-1];
-     }
-   }
-   
-   BARRIER(bars->sl_prini,nprocs)
+  t2a = (double **) q_multi[procid][numlev-1];
+  t2b = (double **) psib[procid];
+  double fac = 1.0 / (4.0 - ressqr*eig2);
+  for(long i=ist;i<=ien;i++) {
+    double* t1a = (double *) t2a[i];
+    double*t1b = (double *) t2b[i];
+    double*t1c = (double *) t2b[i-1];
+    double*t1d = (double *) t2b[i+1];
+    for(long j = jst; j <= jen; j++) {
+      t1a[j] = fac * (t1d[j]+t1c[j]+t1b[j+1]+t1b[j-1] - ressqr*t1b[j]);
+    }
+  }
 
-   t2a = (double **) psib[procid];
-   j = gp[procid].neighbors[UP];
-   if (j != -1) {
-     t1a = (double *) t2a[0];
-     t1b = (double *) psib[j][im-2];
-     for (i=1;i<jm-1;i++) {
-       t1a[i] = t1b[i];
-     }
-   }
-   j = gp[procid].neighbors[DOWN];
-   if (j != -1) {
-     t1a = (double *) t2a[im-1];
-     t1b = (double *) psib[j][1];
-     for (i=1;i<jm-1;i++) {
-       t1a[i] = t1b[i];
-     }
-   }
-   j = gp[procid].neighbors[LEFT];
-   if (j != -1) {
-     t2b = (double **) psib[j];
-     for (i=1;i<im-1;i++) {
-       t2a[i][0] = t2b[i][jm-2];
-     }
-   }
-   j = gp[procid].neighbors[RIGHT];
-   if (j != -1) {
-     t2b = (double **) psib[j];
-     for (i=1;i<im-1;i++) {
-       t2a[i][jm-1] = t2b[i][1];
-     }
-   }
+  multig(procid);
 
-   t2a = (double **) q_multi[procid][numlev-1];
-   t2b = (double **) psib[procid];
-   fac = 1.0 / (4.0 - ressqr*eig2);
-   for(i=ist;i<=ien;i++) {
-     t1a = (double *) t2a[i];
-     t1b = (double *) t2b[i];
-     t1c = (double *) t2b[i-1];
-     t1d = (double *) t2b[i+1];
-     for(j=jst;j<=jen;j++) {
-       t1a[j] = fac * (t1d[j]+t1c[j]+t1b[j+1]+t1b[j-1] -
-                   ressqr*t1b[j]);
-     }
-   }
+  for(long i=istart;i<=iend;i++) {
+    double* t1a = (double *) t2a[i];
+    double*t1b = (double *) t2b[i];
+    for(long j=jstart;j<=jend;j++) {
+      t1b[j] = t1a[j];
+    }
+  }
 
-   multig(procid);
-
-   for(i=istart;i<=iend;i++) {
-     t1a = (double *) t2a[i];
-     t1b = (double *) t2b[i];
-     for(j=jstart;j<=jend;j++) {
-       t1b[j] = t1a[j];
-     }
-   }
-
-   BARRIER(bars->sl_prini,nprocs)
-
-/* update the local running sum psibipriv by summing all the resulting
+  /* update the local running sum psibipriv by summing all the resulting
    values in that process's share of the psib matrix   */
 
-   t2a = (double **) psib[procid];
-   psibipriv=0.0;
-   if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-     psibipriv = psibipriv + 0.25*(t2a[0][0]);
-   }
-   if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-     psibipriv = psibipriv + 0.25*(t2a[0][jm-1]);
-   }
-   if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-     psibipriv=psibipriv+0.25*(t2a[im-1][0]);
-   }
-   if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-     psibipriv=psibipriv+0.25*(t2a[im-1][jm-1]);
-   }
-   if (gp[procid].neighbors[UP] == -1) {
-     t1a = (double *) t2a[0];
-     for(j=firstcol;j<=lastcol;j++) {
-       psibipriv = psibipriv + 0.5*t1a[j];
-     }
-   }
-   if (gp[procid].neighbors[DOWN] == -1) {
-     t1a = (double *) t2a[im-1];
-     for(j=firstcol;j<=lastcol;j++) {
-       psibipriv = psibipriv + 0.5*t1a[j];
-     }
-   }
-   if (gp[procid].neighbors[LEFT] == -1) {
-     for(j=firstrow;j<=lastrow;j++) {
-       psibipriv = psibipriv + 0.5*t2a[j][0];
-     }
-   }
-   if (gp[procid].neighbors[RIGHT] == -1) {
-     for(j=firstrow;j<=lastrow;j++) {
-       psibipriv = psibipriv + 0.5*t2a[j][jm-1];
-     }
-   }
-   for(i=firstrow;i<=lastrow;i++) {
-     t1a = (double *) t2a[i];
-     for(iindex=firstcol;iindex<=lastcol;iindex++) {
-       psibipriv = psibipriv + t1a[iindex];
-     }
-   }
+  double psibipriv = calculatePsiipriv(psib[procid], gp[procid].neighbors, firstrow, lastrow, firstcol, lastcol);
 
-/* update the shared variable psibi by summing all the psibiprivs
+  /* update the shared variable psibi by summing all the psibiprivs
    of the individual processes into it.  note that this combined
    private and shared sum method avoids accessing the shared
    variable psibi once for every element of the matrix.  */
-/*
-   LOCK(locks->psibilock)
-     global->psibi = global->psibi + psibipriv;
-   UNLOCK(locks->psibilock)
-*/
-   FETCH_ADD_DOUBLE(&global->psibi, psibipriv);
-   
-/* initialize psim matrices
 
+  FETCH_ADD_DOUBLE(&global->psibi, psibipriv);
+   
+  /* initialize psim matrices
    if there is more than one process, then split the processes
    between the two psim matrices; otherwise, let the single process
    work on one first and then the other   */
 
-   for(psiindex=0;psiindex<=1;psiindex++) {
-     t2a = (double **) psim[procid][psiindex];
-     if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-       t2a[0][0] = 0.0;
-     }
-     if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-       t2a[im-1][0] = 0.0;
-     }
-     if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-       t2a[0][jm-1] = 0.0;
-     }
-     if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-       t2a[im-1][jm-1] = 0.0;
-     }
-     if (gp[procid].neighbors[UP] == -1) {
-       t1a = (double *) t2a[0];
-       for(j=firstcol;j<=lastcol;j++) {
-         t1a[j] = 0.0;
-       }
-     }
-     if (gp[procid].neighbors[DOWN] == -1) {
-       t1a = (double *) t2a[im-1];
-       for(j=firstcol;j<=lastcol;j++) {
-         t1a[j] = 0.0;
-       }
-     }
-     if (gp[procid].neighbors[LEFT] == -1) {
-       for(j=firstrow;j<=lastrow;j++) {
-         t2a[j][0] = 0.0;
-       }
-     }
-     if (gp[procid].neighbors[RIGHT] == -1) {
-       for(j=firstrow;j<=lastrow;j++) {
-         t2a[j][jm-1] = 0.0;
-       }
-     }
-     for(i=firstrow;i<=lastrow;i++) {
-       t1a = (double *) t2a[i];
-       for(iindex=firstcol;iindex<=lastcol;iindex++) {
-         t1a[iindex] = 0.0;
-       }
-     }
-   }
-
-/* initialize psi matrices the same way  */
-
-   for(psiindex=0;psiindex<=1;psiindex++) {
-     t2a = (double **) psi[procid][psiindex];
-     if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-       t2a[0][0] = 0.0;
-     }
-     if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-       t2a[0][jm-1] = 0.0;
-     }
-     if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-       t2a[im-1][0] = 0.0;
-     }
-     if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-       t2a[im-1][jm-1] = 0.0;
-     }
-     if (gp[procid].neighbors[UP] == -1) {
-       t1a = (double *) t2a[0];
-       for(j=firstcol;j<=lastcol;j++) {
-         t1a[j] = 0.0;
-       }
-     }
-     if (gp[procid].neighbors[DOWN] == -1) {
-       t1a = (double *) t2a[im-1];
-       for(j=firstcol;j<=lastcol;j++) {
-         t1a[j] = 0.0;
-       }
-     }
-     if (gp[procid].neighbors[LEFT] == -1) {
-       for(j=firstrow;j<=lastrow;j++) {
-         t2a[j][0] = 0.0;
-       }
-     }
-     if (gp[procid].neighbors[RIGHT] == -1) {
-       for(j=firstrow;j<=lastrow;j++) {
-         t2a[j][jm-1] = 0.0;
-       }
-     }
-     for(i=firstrow;i<=lastrow;i++) {
-       t1a = (double *) t2a[i];
-       for(iindex=firstcol;iindex<=lastcol;iindex++) {
-         t1a[iindex] = 0.0;
-       }
-     }
-   }
-
-/* compute input curl of wind stress */
-
-   t2a = (double **) tauz[procid];
-   ysca1 = .5*ysca;
-   factor= -t0*pi/ysca1;
-   if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-     t2a[0][0] = 0.0;
-   }
-   if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-     t2a[im-1][0] = 0.0;
-   }
-   if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-     sintemp = pi*((double) jm-1+j_off)*res/ysca1;
-     sintemp = sin(sintemp);
-     t2a[0][jm-1] = factor*sintemp;
-   }
-   if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-     sintemp = pi*((double) jm-1+j_off)*res/ysca1;
-     sintemp = sin(sintemp);
-     t2a[im-1][jm-1] = factor*sintemp;
-   }
-   if (gp[procid].neighbors[UP] == -1) {
-     t1a = (double *) t2a[0];
-     for(j=firstcol;j<=lastcol;j++) {
-       sintemp = pi*((double) j+j_off)*res/ysca1;
-       sintemp = sin(sintemp);
-       curlt = factor*sintemp;
-       t1a[j] = curlt;
-     }
-   }
-   if (gp[procid].neighbors[DOWN] == -1) {
-     t1a = (double *) t2a[im-1];
-     for(j=firstcol;j<=lastcol;j++) {
-       sintemp = pi*((double) j+j_off)*res/ysca1;
-       sintemp = sin(sintemp);
-       curlt = factor*sintemp;
-       t1a[j] = curlt;
-     }
-   }
-   if (gp[procid].neighbors[LEFT] == -1) {
-     for(j=firstrow;j<=lastrow;j++) {
-       t2a[j][0] = 0.0;
-     }
-   }
-   if (gp[procid].neighbors[RIGHT] == -1) {
-     sintemp = pi*((double) jm-1+j_off)*res/ysca1;
-     sintemp = sin(sintemp);
-     curlt = factor*sintemp;
-     for(j=firstrow;j<=lastrow;j++) {
-       t2a[j][jm-1] = curlt;
-     }
-   }
-   for(i=firstrow;i<=lastrow;i++) {
-     t1a = (double *) t2a[i];
-     for(iindex=firstcol;iindex<=lastcol;iindex++) {
-       sintemp = pi*((double) iindex+j_off)*res/ysca1;
-       sintemp = sin(sintemp);
-       curlt = factor*sintemp;
-       t1a[iindex] = curlt;
-     }
-   }
-
-   BARRIER(bars->sl_onetime,nprocs)
-
-/***************************************************************
- one-time stuff over at this point
- ***************************************************************/
-
-   while (!endflag) {
-     while ((!dayflag) || (!dhourflag)) {
-       dayflag = 0;
-       dhourflag = 0;
-       if (nstep == 1) {
-         if (procid == MASTER) {
-            CLOCK(global->trackstart)
-         }
-	 if ((procid == MASTER) || (do_stats)) {
-	   CLOCK(t1);
-           gp[procid].total_time = t1;
-           gp[procid].multi_time = 0;
-	 }
-/* POSSIBLE ENHANCEMENT:  Here is where one might reset the
-   statistics that one is measuring about the parallel execution */
-       }
-
-       slave2(procid,firstrow,lastrow,numrows,firstcol,lastcol,numcols);
-
-/* update time and step number
-   note that these time and step variables are private i.e. every
-   process has its own copy and keeps track of its own time  */
-
-       ttime = ttime + dtau;
-       nstep = nstep + 1;
-       day = ttime/86400.0;
-
-       if (day > ((double) outday0)) {
-         dayflag = 1;
-         iday = (long) day;
-         dhour = dhour+dtau;
-         if (dhour >= 86400.0) {
-	   dhourflag = 1;
-         }
-       }
-     }
-     dhour = 0.0;
-
-     t2a = (double **) psium[procid];
-     t2b = (double **) psim[procid][0];
-     if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-       t2a[0][0] = t2a[0][0]+t2b[0][0];
-     }
-     if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-       t2a[im-1][0] = t2a[im-1][0]+t2b[im-1][0];
-     }
-     if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-       t2a[0][jm-1] = t2a[0][jm-1]+t2b[0][jm-1];
-     }
-     if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-       t2a[im-1][jm-1] = t2a[im-1][jm-1] +
-				   t2b[im-1][jm-1];
-     }
-     if (gp[procid].neighbors[UP] == -1) {
-       t1a = (double *) t2a[0];
-       t1b = (double *) t2b[0];
-       for(j=firstcol;j<=lastcol;j++) {
-         t1a[j] = t1a[j]+t1b[j];
-       }
-     }
-     if (gp[procid].neighbors[DOWN] == -1) {
-       t1a = (double *) t2a[im-1];
-       t1b = (double *) t2b[im-1];
-       for(j=firstcol;j<=lastcol;j++) {
-         t1a[j] = t1a[j] + t1b[j];
-       }
-     }
-     if (gp[procid].neighbors[LEFT] == -1) {
-       for(j=firstrow;j<=lastrow;j++) {
-         t2a[j][0] = t2a[j][0]+t2b[j][0];
-       }
-     }
-     if (gp[procid].neighbors[RIGHT] == -1) {
-       for(j=firstrow;j<=lastrow;j++) {
-         t2a[j][jm-1] = t2a[j][jm-1] +
-				  t2b[j][jm-1];
-       }
-     }
-     for(i=firstrow;i<=lastrow;i++) {
-       t1a = (double *) t2a[i];
-       t1b = (double *) t2b[i];
-       for(iindex=firstcol;iindex<=lastcol;iindex++) {
-         t1a[iindex] = t1a[iindex] + t1b[iindex];
-       }
-     }
-
-/* update values of psilm array to psilm + psim[2]  */
-
-     t2a = (double **) psilm[procid];
-     t2b = (double **) psim[procid][1];
-     if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-       t2a[0][0] = t2a[0][0]+t2b[0][0];
-     }
-     if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-       t2a[im-1][0] = t2a[im-1][0]+t2b[im-1][0];
-     }
-     if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-       t2a[0][jm-1] = t2a[0][jm-1]+t2b[0][jm-1];
-     }
-     if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-       t2a[im-1][jm-1] = t2a[im-1][jm-1] +
-				   t2b[im-1][jm-1];
-     }
-     if (gp[procid].neighbors[UP] == -1) {
-       t1a = (double *) t2a[0];
-       t1b = (double *) t2b[0];
-       for(j=firstcol;j<=lastcol;j++) {
-         t1a[j] = t1a[j]+t1b[j];
-       }
-     }
-     if (gp[procid].neighbors[DOWN] == -1) {
-       t1a = (double *) t2a[im-1];
-       t1b = (double *) t2b[im-1];
-       for(j=firstcol;j<=lastcol;j++) {
-         t1a[j] = t1a[j]+t1b[j];
-       }
-     }
-     if (gp[procid].neighbors[LEFT] == -1) {
-       for(j=firstrow;j<=lastrow;j++) {
-         t2a[j][0] = t2a[j][0]+t2b[j][0];
-       }
-     }
-     if (gp[procid].neighbors[RIGHT] == -1) {
-       for(j=firstrow;j<=lastrow;j++) {
-         t2a[j][jm-1] = t2a[j][jm-1] + t2b[j][jm-1];
-       }
-     }
-     for(i=firstrow;i<=lastrow;i++) {
-       t1a = (double *) t2a[i];
-       t1b = (double *) t2b[i];
-       for(iindex=firstcol;iindex<=lastcol;iindex++) {
-         t1a[iindex] = t1a[iindex] + t1b[iindex];
-       }
-     }
-     if (iday >= (long) outday3) {
-       endflag = 1;
-     }
+  for(long psiindex = 0; psiindex <= 1; psiindex++) {
+    initializeWithBorders(psim[procid][psiindex], gp[procid].neighbors, firstrow, lastrow, firstcol, lastcol, 0.0D);
   }
-  if ((procid == MASTER) || (do_stats)) {
-    CLOCK(t1);
-    gp[procid].total_time = t1-gp[procid].total_time;
+
+  /* initialize psi matrices the same way  */
+
+  for(long psiindex = 0; psiindex <= 1; psiindex++) {
+    initializeWithBorders(psi[procid][psiindex], gp[procid].neighbors, firstrow, lastrow, firstcol, lastcol, 0.0D);
+  }
+
+  /* compute input curl of wind stress */
+
+  t2a = (double **) tauz[procid];
+  ysca1 = .5*ysca;
+  double factor= -t0*pi/ysca1;
+  if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
+    t2a[0][0] = 0.0;
+  }
+  if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
+    t2a[im-1][0] = 0.0;
+  }
+  if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
+    double sintemp = pi*((double) jm-1+j_off)*res/ysca1;
+    sintemp = sin(sintemp);
+    t2a[0][jm-1] = factor*sintemp;
+  }
+  if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
+    double sintemp = pi*((double) jm-1+j_off)*res/ysca1;
+    sintemp = sin(sintemp);
+    t2a[im-1][jm-1] = factor*sintemp;
+  }
+  if (gp[procid].neighbors[UP] == -1) {
+    double* t1a = (double *) t2a[0];
+    for(long j=firstcol;j<=lastcol;j++) {
+      double sintemp = pi*((double) j+j_off)*res/ysca1;
+      sintemp = sin(sintemp);
+      double curlt = factor*sintemp;
+      t1a[j] = curlt;
+    }
+  }
+  if (gp[procid].neighbors[DOWN] == -1) {
+    double* t1a = (double *) t2a[im-1];
+    for(long j=firstcol;j<=lastcol;j++) {
+      double sintemp = pi*((double) j+j_off)*res/ysca1;
+      sintemp = sin(sintemp);
+      double curlt = factor*sintemp;
+      t1a[j] = curlt;
+    }
+  }
+  if (gp[procid].neighbors[LEFT] == -1) {
+    for(long j=firstrow;j<=lastrow;j++) {
+      t2a[j][0] = 0.0;
+    }
+  }
+  if (gp[procid].neighbors[RIGHT] == -1) {
+    double sintemp = pi*((double) jm-1+j_off)*res/ysca1;
+    sintemp = sin(sintemp);
+    double curlt = factor*sintemp;
+    for(long j=firstrow;j<=lastrow;j++) {
+      t2a[j][jm-1] = curlt;
+    }
+  }
+  for(long i=firstrow;i<=lastrow;i++) {
+    double* t1a = (double *) t2a[i];
+    for(long iindex=firstcol;iindex<=lastcol;iindex++) {
+      double sintemp = pi*((double) iindex+j_off)*res/ysca1;
+      sintemp = sin(sintemp);
+      double curlt = factor*sintemp;
+      t1a[iindex] = curlt;
+    }
+  }
+
+  BARRIER(bars->sl_onetime,nprocs);
+
+  /***************************************************************
+  one-time stuff over at this point
+  ***************************************************************/
+
+  long iday;
+
+  bool dayflag = false;
+  bool dhourflag = false;
+  bool endflag = false;
+  while (!endflag) {
+    while ((!dayflag) || (!dhourflag)) {
+      dayflag = false;
+      dhourflag = false;
+      if (nstep == 1) {
+        /* POSSIBLE ENHANCEMENT:  Here is where one might reset the
+        statistics that one is measuring about the parallel execution */
+      }
+
+      slave2(procid,firstrow,lastrow,numrows,firstcol,lastcol,numcols);
+
+      /* update time and step number
+      note that these time and step variables are private i.e. every
+      process has its own copy and keeps track of its own time  */
+
+      ttime = ttime + dtau;
+      nstep = nstep + 1;
+      day = ttime/86400.0;
+
+      if (day > ((double) outday0)) {
+        dayflag = 1;
+        iday = (long) day;
+        dhour = dhour+dtau;
+        if (dhour >= 86400.0) {
+	        dhourflag = true;
+        }
+      }
+    }
+    dhour = 0.0;
+
+    addValues(psium[procid], psium[procid], psim[procid][0], gp[procid].neighbors, firstrow, lastrow, firstcol, lastcol);
+    addValues(psilm[procid], psium[procid], psim[procid][1], gp[procid].neighbors, firstrow, lastrow, firstcol, lastcol);
+    
+    if (iday >= (long) outday3) {
+      endflag = true;
+    }
   }
 }
 

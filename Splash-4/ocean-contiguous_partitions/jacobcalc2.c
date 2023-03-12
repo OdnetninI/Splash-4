@@ -1,18 +1,19 @@
-/*************************************************************************/
-/*                                                                       */
-/*  Copyright (c) 1994 Stanford University                               */
-/*                                                                       */
-/*  All rights reserved.                                                 */
-/*                                                                       */
-/*  Permission is given to use, copy, and modify this software for any   */
-/*  non-commercial purpose as long as this copyright notice is not       */
-/*  removed.  All other uses, including redistribution in whole or in    */
-/*  part, are forbidden without prior written permission.                */
-/*                                                                       */
-/*  This software is provided with absolutely no warranty and no         */
-/*  support.                                                             */
-/*                                                                       */
-/*************************************************************************/
+/****************************************************************************/
+/*                                                                          */
+/*  Copyright (c) 2023 Eduardo Jose Gomez-Hernandez (University of Murcia)  */       
+/*  Copyright (c) 1994 Stanford University                                  */
+/*                                                                          */
+/*  All rights reserved.                                                    */
+/*                                                                          */
+/*  Permission is given to use, copy, and modify this software for any      */
+/*  non-commercial purpose as long as this copyright notice is not          */
+/*  removed.  All other uses, including redistribution in whole or in       */
+/*  part, are forbidden without prior written permission.                   */
+/*                                                                          */
+/*  This software is provided with absolutely no warranty and no            */
+/*  support.                                                                */
+/*                                                                          */
+/****************************************************************************/
 
 /* Does the arakawa jacobian calculation (of the x and y matrices,
    putting the results in the z matrix) for a subblock. */
@@ -20,13 +21,9 @@
 
 EXTERN_ENV();
 
-#include <stdio.h>
-#include <math.h>
-#include <time.h>
 #include "decs.h"
 
-void jacobcalc2(double ****x, double ****y, double ****z, long psiindex, long pid, long firstrow, long lastrow, long firstcol, long lastcol)
-{
+void jacobcalc2(double ****x, double ****y, double ****z, long psiindex, long pid, long firstrow, long lastrow, long firstcol, long lastcol) {
    double f1;
    double f2;
    double f3;

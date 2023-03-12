@@ -1,18 +1,20 @@
-/*************************************************************************/
-/*                                                                       */
-/*  Copyright (c) 1994 Stanford University                               */
-/*                                                                       */
-/*  All rights reserved.                                                 */
-/*                                                                       */
-/*  Permission is given to use, copy, and modify this software for any   */
-/*  non-commercial purpose as long as this copyright notice is not       */
-/*  removed.  All other uses, including redistribution in whole or in    */
-/*  part, are forbidden without prior written permission.                */
-/*                                                                       */
-/*  This software is provided with absolutely no warranty and no         */
-/*  support.                                                             */
-/*                                                                       */
-/*************************************************************************/
+/****************************************************************************/
+/*                                                                          */
+/*  Copyright (c) 2023 Eduardo Jose Gomez-Hernandez (University of Murcia)  */       
+/*  Copyright (c) 1994 Stanford University                                  */
+/*                                                                          */
+/*  All rights reserved.                                                    */
+/*                                                                          */
+/*  Permission is given to use, copy, and modify this software for any      */
+/*  non-commercial purpose as long as this copyright notice is not          */
+/*  removed.  All other uses, including redistribution in whole or in       */
+/*  part, are forbidden without prior written permission.                   */
+/*                                                                          */
+/*  This software is provided with absolutely no warranty and no            */
+/*  support.                                                                */
+/*                                                                          */
+/****************************************************************************/
+
 #ifndef __DECS_H__
 #define __DECS_H__
 
@@ -41,8 +43,6 @@ extern struct multi_struct *multi;
 
 struct global_struct {
    long id;
-   long starttime;
-   long trackstart;
    double psiai;
    double psibi;
 };
@@ -77,17 +77,6 @@ extern double *f;
 extern double ****q_multi;
 extern double ****rhs_multi;
 
-struct locks_struct {
-   LOCKDEC(idlock)
-   LOCKDEC(psiailock)
-   LOCKDEC(psibilock)
-   LOCKDEC(donelock)
-   LOCKDEC(error_lock)
-   LOCKDEC(bar_lock)
-};
-
-extern struct locks_struct *locks;
-
 struct bars_struct {
    BARDEC(iteration)
    BARDEC(gsudn)
@@ -98,15 +87,12 @@ struct bars_struct {
    BARDEC(sl_prini)
    BARDEC(sl_psini)
    BARDEC(sl_onetime)
-   BARDEC(sl_phase_1)
    BARDEC(sl_phase_2)
    BARDEC(sl_phase_3)
    BARDEC(sl_phase_4)
    BARDEC(sl_phase_5)
    BARDEC(sl_phase_6)
    BARDEC(sl_phase_7)
-   BARDEC(sl_phase_8)
-   BARDEC(sl_phase_9)
    BARDEC(sl_phase_10)
    BARDEC(error_barrier)
 };
@@ -131,8 +117,6 @@ struct Global_Private {
   long rownum;
   long colnum;
   long neighbors[8];
-  double multi_time;
-  double total_time;
 };
 
 extern struct Global_Private *gp;
@@ -168,10 +152,7 @@ extern double beta;
 extern double gpr;
 extern long im;
 extern long jm;
-extern long do_stats;
-extern long do_output;
-extern long *multi_times;
-extern long *total_times;
+extern bool do_output;
 
 /*
  * jacobcalc.C
@@ -198,7 +179,7 @@ void link_multi(void);
 /*
  * main.C
  */
-long log_2(long number);
+void ArgumentParser(int argc, char* argv[]);
 void printerr(char *s);
 
 /*
@@ -228,5 +209,17 @@ void slave2(long procid, long firstrow, long lastrow, long numrows, long firstco
  * subblock.C
  */
 void subblock(void);
+
+/*
+ * slaveHelper.c
+ */
+void addValues(double** A, double** B, double** C, long neighbors[8], long firstrow, long lastrow, long firstcol, long lastcol);
+void addValuesWithWeight(double** A, double** B, double c_weight, double** C, long neighbors[8], long firstrow, long lastrow, long firstcol, long lastcol);
+void addValuesWith2Weight(double** A, double b_weight, double** B, double c_weight, double** C, long neighbors[8], long firstrow, long lastrow, long firstcol, long lastcol);
+void subValues(double** A, double** B, double** C, long neighbors[8], long firstrow, long lastrow, long firstcol, long lastcol);
+void subValuesWithWeight(double** A, double** B, double c_weight, double** C, long neighbors[8], long firstrow, long lastrow, long firstcol, long lastcol);
+void copyValues(double** A, double** B, long neighbors[8], long firstrow, long lastrow, long firstcol, long lastcol);
+double calculatePsiipriv(double** A, long neighbors[8], long firstrow, long lastrow, long firstcol, long lastcol);
+void initializeWithBorders (double** t2a, long neighbors[8], long firstrow, long lastrow, long firstcol, long lastcol, double initValue);
 
 #endif /* __DECS_H__ */

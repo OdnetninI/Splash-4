@@ -23,12 +23,8 @@ EXTERN_ENV();
 
 #include "decs.h"
 
-void link_all()
-{
-  long i;
-  long j;
-
-  for (j=0;j<nprocs;j++) {
+void link_all() {
+  for (long j = 0; j < nprocs; j++) {
     linkup(psium[j]);
     linkup(psilm[j]);
     linkup(psib[j]);
@@ -40,7 +36,7 @@ void link_all()
     linkup(tauz[j]);
     linkup(oldga[j]);
     linkup(oldgb[j]);
-    for (i=0;i<=1;i++) {
+    for (long i = 0; i <= 1; i++) {
       linkup(psi[j][i]);
       linkup(psim[j][i]);
       linkup(work1[j][i]);
@@ -53,29 +49,20 @@ void link_all()
   link_multi();
 }
 
-void linkup(double **row_ptr)
-{
-  long i;
-  double *a;
-  double **row;
-  double **y;
-  long x_part;
-  long y_part;
-
-  x_part = (jm-2)/xprocs + 2;
-  y_part = (im-2)/yprocs + 2;
-  row = row_ptr;
-  y = row + y_part;
-  a = (double *) y;
-  for (i=0;i<y_part;i++) {
+void linkup(double **row_ptr) {
+  long x_part = (jm-2)/xprocs + 2;
+  long y_part = (im-2)/yprocs + 2;
+  double** row = row_ptr;
+  double** y = row + y_part;
+  double* a = (double *) y;
+  for (long i = 0; i < y_part; i++) {
     *row = (double *) a;
     row++;
     a += x_part;
   }
 }
 
-void link_multi()
-{
+void link_multi() {
   long i;
   long j;
   long l;

@@ -1,29 +1,27 @@
-/*************************************************************************/
-/*                                                                       */
-/*  Copyright (c) 1994 Stanford University                               */
-/*                                                                       */
-/*  All rights reserved.                                                 */
-/*                                                                       */
-/*  Permission is given to use, copy, and modify this software for any   */
-/*  non-commercial purpose as long as this copyright notice is not       */
-/*  removed.  All other uses, including redistribution in whole or in    */
-/*  part, are forbidden without prior written permission.                */
-/*                                                                       */
-/*  This software is provided with absolutely no warranty and no         */
-/*  support.                                                             */
-/*                                                                       */
-/*************************************************************************/
+/****************************************************************************/
+/*                                                                          */
+/*  Copyright (c) 2023 Eduardo Jose Gomez-Hernandez (University of Murcia)  */       
+/*  Copyright (c) 1994 Stanford University                                  */
+/*                                                                          */
+/*  All rights reserved.                                                    */
+/*                                                                          */
+/*  Permission is given to use, copy, and modify this software for any      */
+/*  non-commercial purpose as long as this copyright notice is not          */
+/*  removed.  All other uses, including redistribution in whole or in       */
+/*  part, are forbidden without prior written permission.                   */
+/*                                                                          */
+/*  This software is provided with absolutely no warranty and no            */
+/*  support.                                                                */
+/*                                                                          */
+/****************************************************************************/
+
 #include "../common/common.h"
 
 EXTERN_ENV();
 
-#include <stdio.h>
-#include <math.h>
 #include "decs.h"
 
-void subblock()
-
-{
+void subblock() {
    long i;
    long j;
    long k;

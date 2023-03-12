@@ -1,31 +1,28 @@
-/*************************************************************************/
-/*                                                                       */
-/*  Copyright (c) 1994 Stanford University                               */
-/*                                                                       */
-/*  All rights reserved.                                                 */
-/*                                                                       */
-/*  Permission is given to use, copy, and modify this software for any   */
-/*  non-commercial purpose as long as this copyright notice is not       */
-/*  removed.  All other uses, including redistribution in whole or in    */
-/*  part, are forbidden without prior written permission.                */
-/*                                                                       */
-/*  This software is provided with absolutely no warranty and no         */
-/*  support.                                                             */
-/*                                                                       */
-/*************************************************************************/
+/****************************************************************************/
+/*                                                                          */
+/*  Copyright (c) 2023 Eduardo Jose Gomez-Hernandez (University of Murcia)  */       
+/*  Copyright (c) 1994 Stanford University                                  */
+/*                                                                          */
+/*  All rights reserved.                                                    */
+/*                                                                          */
+/*  Permission is given to use, copy, and modify this software for any      */
+/*  non-commercial purpose as long as this copyright notice is not          */
+/*  removed.  All other uses, including redistribution in whole or in       */
+/*  part, are forbidden without prior written permission.                   */
+/*                                                                          */
+/*  This software is provided with absolutely no warranty and no            */
+/*  support.                                                                */
+/*                                                                          */
+/****************************************************************************/
 
 /* Performs the laplacian calculation for a subblock */
 #include "../common/common.h"
 
 EXTERN_ENV();
 
-#include <stdio.h>
-#include <math.h>
-#include <time.h>
 #include "decs.h"
 
-void laplacalc(long procid, double ****x, double ****z, long psiindex, long firstrow, long lastrow, long firstcol, long lastcol)
-{
+void laplacalc(long procid, double ****x, double ****z, long psiindex, long firstrow, long lastrow, long firstcol, long lastcol) {
    long iindex;
    long indexp1;
    long indexm1;
@@ -33,14 +30,13 @@ void laplacalc(long procid, double ****x, double ****z, long psiindex, long firs
    long im1;
    long i;
    long j;
-   double **t2a;
    double **t2b;
    double *t1a;
    double *t1b;
    double *t1c;
    double *t1d;
 
-   t2a = (double **) x[procid][psiindex];
+  double** t2a = (double **) x[procid][psiindex];
    j = gp[procid].neighbors[UP];
    if (j != -1) {
      t1a = (double *) t2a[0];
