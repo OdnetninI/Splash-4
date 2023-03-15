@@ -1,7 +1,7 @@
 Splash-4 Benchmark Suite
 ========================
 
-Splash-4 is a benchmark suite based on Splash-3 but with enfasis in atomic instructions. It was first presented at ISPASS'21. Then, fully released at IISWC'22.
+Splash-4 is a benchmark suite based on Splash-3 but with emphasis in atomic instructions. It was first presented at ISPASS'21. Then, fully released at IISWC'22.
 
 ## Building and Running
 
