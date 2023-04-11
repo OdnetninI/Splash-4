@@ -194,6 +194,8 @@ m4_define(INCLUDES,`
 #include <sched.h>
 #include <unistd.h>
 
+#include <sys/time.h>
+
 #define PAGE_SIZE 4096
 #define __MAX_THREADS__ 256
 ')
@@ -216,5 +218,9 @@ BAREXTERN
 
 m4_define(G_MALLOC, `({ void* mem = malloc($1); assert(mem); mem; });')
 m4_define(NU_MALLOC, `({ void* mem = malloc($1); assert(mem); mem; });')
-m4_define(CLOCK, `{long time(); ($1) = time(0);}')
+m4_define(CLOCK, `{
+  struct timeval FullTime;
+  gettimeofday(&FullTime, NULL);
+  ($1) = (unsigned long)(FullTime.tv_usec + FullTime.tv_sec * 1000000);
+}')
 m4_divert(0)
