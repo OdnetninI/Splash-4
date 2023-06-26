@@ -25,25 +25,25 @@ EXTERN_ENV();
 
 #include "decs.h"
 
+#define BLACK_TREE 1
+#define RED_TREE 0
+
 /* perform multigrid (w cycles)                                     */
 void multig(long my_id) {
-  double errp;
-  double local_err;
-  double red_local_err;
-  double black_local_err;
-
-  long flag1 = 0;
-  long flag2 = 0;
-  long iter = 0;
   long m = numlev-1;
-  double wmax = maxwork;
-  long my_num = my_id;
+
+  long iter = 0;
+  long k = m;
   double wu = 0.0;
 
-  long k = m;
+  bool has_finished = false;
   double g_error = 1.0e30;
-  while ((!flag1) && (!flag2)) {
-    errp = g_error;
+  
+  double wmax = maxwork;
+  long my_num = my_id;
+
+  while (!has_finished) {
+    double errp = g_error;
     iter++;
     if (my_num == MASTER) {
       multi->err_multi = 0.0;
@@ -54,7 +54,10 @@ void multig(long my_id) {
 
     BARRIER(bars->error_barrier,nprocs);
   
-    copy_black(k,my_num);
+    copy_red_or_black(k,my_num, BLACK_TREE);
+
+    double local_err;
+    double red_local_err;
 
     relax(k,&red_local_err,RED_ITER,my_num);
 
@@ -62,23 +65,17 @@ void multig(long my_id) {
 
     BARRIER(bars->error_barrier,nprocs)
  
-    copy_red(k,my_num);
+    copy_red_or_black(k,my_num, RED_TREE);
+
+    double black_local_err;
 
     relax(k,&black_local_err,BLACK_ITER,my_num);
 
     /* compute max local error from red_local_err and black_local_err  */
-
-    if (red_local_err > black_local_err) {
-      local_err = red_local_err;
-    } else {
-      local_err = black_local_err;
-    }
+    local_err = max(red_local_err, black_local_err);
 
     /* update the global error if necessary                         */
-    double expected = LOAD(multi->err_multi);
-    do {
-      if (local_err <= expected) break;
-    } while (!CAS(multi->err_multi, expected, local_err));
+    ATOMIC_MAX_DOUBLE(&(multi->err_multi), local_err);
 	
     /* a single relaxation sweep at the finest level is one unit of work */
 
@@ -96,39 +93,34 @@ void multig(long my_id) {
     BARRIER(bars->error_barrier,nprocs);
 
     if (g_error >= lev_tol[k]) {
-      if (wu > wmax) { /* max work exceeded                                               */
-        flag1 = 1;
-	      fprintf(stderr,"ERROR: Maximum work limit %0.5f exceeded\n",wmax);
-	      exit(-1);
-      } else {
-        /* if we have not converged                                        */
-        if ((k != 0) && (g_error/errp >= 0.6) && (k > minlevel)) {
-          /* if need to go to coarser grid                                   */
-          copy_borders(k,my_num);
-          copy_rhs_borders(k,my_num);
+      IF_EXIT(wu > wmax, "ERROR: Maximum work limit %0.5f exceeded\n",wmax);
+      /* if we have not converged                                        */
+      if ((k != 0) && (g_error/errp >= 0.6) && (k > minlevel)) {
+        /* if need to go to coarser grid                                   */
+        copy_borders(k,my_num);
+        copy_rhs_borders(k,my_num);
 
-          /* This bar is needed because the routine rescal uses the neighbor's
-          border points to compute s4.  We must ensure that the neighbor's
-          border points have been written before we try computing the new
-          rescal values                                                   */
+        /* This bar is needed because the routine rescal uses the neighbor's
+        border points to compute s4.  We must ensure that the neighbor's
+        border points have been written before we try computing the new
+        rescal values                                                   */
 
-          BARRIER(bars->error_barrier,nprocs)    
+        BARRIER(bars->error_barrier,nprocs)    
 
-          rescal(k,my_num);
+        rescal(k,my_num);
 
-          /* transfer residual to rhs of coarser grid                        */
-          lev_tol[k-1] = 0.3 * g_error;
-          k = k-1;
-          putz(k,my_num);
-          /* make initial guess on coarser grid zero                         */
-          g_error = 1.0e30;
-        }
+        /* transfer residual to rhs of coarser grid                        */
+        lev_tol[k-1] = 0.3 * g_error;
+        k = k-1;
+        putz(k,my_num);
+        /* make initial guess on coarser grid zero                         */
+        g_error = 1.0e30;
       }
     } else {
       /* if we have converged at this level                              */
       if (k == m) {
         /* if finest grid, we are done                                     */
-        flag2 = 1;
+        has_finished = true;
       } else {
         /* else go to next finest grid                                     */
         copy_borders(k,my_num);
@@ -148,262 +140,199 @@ void multig(long my_id) {
   }
 }
 
+#undef BLACK
+#undef RED
+
 /* perform red or black iteration (not both)                    */
 void relax(long k, double *err, long color, long my_num) {
-   long i;
-   long j;
-   long iend;
-   long jend;
-   long oddistart;
-   long oddjstart;
-   long evenistart;
-   long evenjstart;
-   double a;
-   double h;
-   double factor;
-   double maxerr;
-   double newerr;
-   double oldval;
-   double newval;
-   double **t2a;
-   double **t2b;
-   double *t1a;
-   double *t1b;
-   double *t1c;
-   double *t1d;
-
-   i = 0;
-   j = 0;
-
-   *err = 0.0;
-   h = lev_res[k];
+  *err = 0.0;
+  double h = lev_res[k];
 
 /* points whose sum of row and col index is even do a red iteration, */
 /* others do a black				                     */
 
-   evenistart = gp[my_num].eist[k];
-   evenjstart = gp[my_num].ejst[k];
-   oddistart = gp[my_num].oist[k];
-   oddjstart = gp[my_num].ojst[k];
+  long evenistart = gp[my_num].eist[k];
+  long evenjstart = gp[my_num].ejst[k];
+  long oddistart = gp[my_num].oist[k];
+  long oddjstart = gp[my_num].ojst[k];
 
-   iend = gp[my_num].rlien[k];
-   jend = gp[my_num].rljen[k];
+  long iend = gp[my_num].rlien[k];
+  long jend = gp[my_num].rljen[k];
 
-   factor = 4.0 - eig2 * h * h ;
-   maxerr = 0.0;
-   t2a = (double **) q_multi[my_num][k];
-   t2b = (double **) rhs_multi[my_num][k];
-   if (color == RED_ITER) {
-     for (i=evenistart;i<iend;i+=2) {
-       t1a = (double *) t2a[i];
-       t1b = (double *) t2b[i];
-       t1c = (double *) t2a[i-1];
-       t1d = (double *) t2a[i+1];
-       for (j=evenjstart;j<jend;j+=2) {
-         a = t1a[j+1] + t1a[j-1] +
-	     t1c[j] + t1d[j] -
-	     t1b[j] ;
-         oldval = t1a[j];
-         newval = a / factor;
-         newerr = oldval - newval;
-         t1a[j] = newval;
-         if (fabs(newerr) > maxerr) {
-           maxerr = fabs(newerr);
-         }
-       }
-     }
-     for (i=oddistart;i<iend;i+=2) {
-       t1a = (double *) t2a[i];
-       t1b = (double *) t2b[i];
-       t1c = (double *) t2a[i-1];
-       t1d = (double *) t2a[i+1];
-       for (j=oddjstart;j<jend;j+=2) {
-         a = t1a[j+1] + t1a[j-1] +
-	     t1c[j] + t1d[j] -
-	     t1b[j] ;
-         oldval = t1a[j];
-         newval = a / factor;
-         newerr = oldval - newval;
-         t1a[j] = newval;
-         if (fabs(newerr) > maxerr) {
-           maxerr = fabs(newerr);
-         }
-       }
-     }
-   } else if (color == BLACK_ITER) {
-     for (i=evenistart;i<iend;i+=2) {
-       t1a = (double *) t2a[i];
-       t1b = (double *) t2b[i];
-       t1c = (double *) t2a[i-1];
-       t1d = (double *) t2a[i+1];
-       for (j=oddjstart;j<jend;j+=2) {
-         a = t1a[j+1] + t1a[j-1] +
-	     t1c[j] + t1d[j] -
-	     t1b[j] ;
-         oldval = t1a[j];
-         newval = a / factor;
-         newerr = oldval - newval;
-         t1a[j] = newval;
-         if (fabs(newerr) > maxerr) {
-           maxerr = fabs(newerr);
-         }
-       }
-     }
-     for (i=oddistart;i<iend;i+=2) {
-       t1a = (double *) t2a[i];
-       t1b = (double *) t2b[i];
-       t1c = (double *) t2a[i-1];
-       t1d = (double *) t2a[i+1];
-       for (j=evenjstart;j<jend;j+=2) {
-         a = t1a[j+1] + t1a[j-1] +
-	     t1c[j] + t1d[j] -
-	     t1b[j] ;
-         oldval = t1a[j];
-         newval = a / factor;
-         newerr = oldval - newval;
-         t1a[j] = newval;
-         if (fabs(newerr) > maxerr) {
-           maxerr = fabs(newerr);
-         }
-       }
-     }
-   }
-   *err = maxerr;
+  double factor = 4.0 - eig2 * h * h ;
+  double maxerr = 0.0;
+
+  double** q_multi_local = (double **) q_multi[my_num][k];
+  double** rhs_multi_local = (double **) rhs_multi[my_num][k];
+  if (color == RED_ITER) {
+    for (long i = evenistart; i < iend; i+=2) {
+      double* t1a = (double *) q_multi_local[i];
+      double* t1b = (double *) rhs_multi_local[i];
+      double* t1c = (double *) q_multi_local[i-1];
+      double* t1d = (double *) q_multi_local[i+1];
+      for (long j = evenjstart; j < jend; j+=2) {
+        double a = t1a[j+1] + t1a[j-1] + t1c[j] + t1d[j] - t1b[j];
+        double oldval = t1a[j];
+        double newval = a / factor;
+        double newerr = oldval - newval;
+        t1a[j] = newval;
+        maxerr = max(maxerr, fabs(newerr));
+      }
+    }
+    for (long i = oddistart; i < iend; i+=2) {
+      double* t1a = (double *) q_multi_local[i];
+      double* t1b = (double *) rhs_multi_local[i];
+      double* t1c = (double *) q_multi_local[i-1];
+      double* t1d = (double *) q_multi_local[i+1];
+      for (long j = oddjstart; j < jend; j+=2) {
+        double a = t1a[j+1] + t1a[j-1] + t1c[j] + t1d[j] - t1b[j];
+        double oldval = t1a[j];
+        double newval = a / factor;
+        double newerr = oldval - newval;
+        t1a[j] = newval;
+        if (fabs(newerr) > maxerr) {
+          maxerr = fabs(newerr);
+        }
+      }
+    }
+  } else if (color == BLACK_ITER) {
+    for (long i = evenistart; i < iend; i+=2) {
+      double* t1a = (double *) q_multi_local[i];
+      double* t1b = (double *) rhs_multi_local[i];
+      double* t1c = (double *) q_multi_local[i-1];
+      double* t1d = (double *) q_multi_local[i+1];
+      for (long j = oddjstart; j < jend; j+=2) {
+        double a = t1a[j+1] + t1a[j-1] + t1c[j] + t1d[j] - t1b[j];
+        double oldval = t1a[j];
+        double newval = a / factor;
+        double newerr = oldval - newval;
+        t1a[j] = newval;
+        maxerr = max(maxerr, fabs(newerr));
+      }
+    }
+    for (long i = oddistart; i < iend; i+=2) {
+      double* t1a = (double *) q_multi_local[i];
+      double* t1b = (double *) rhs_multi_local[i];
+      double* t1c = (double *) q_multi_local[i-1];
+      double* t1d = (double *) q_multi_local[i+1];
+      for (long j = evenjstart; j < jend; j+=2) {
+        double a = t1a[j+1] + t1a[j-1] + t1c[j] + t1d[j] - t1b[j];
+        double oldval = t1a[j];
+        double newval = a / factor;
+        double newerr = oldval - newval;
+        t1a[j] = newval;
+        maxerr = max(maxerr, fabs(newerr));
+      }
+    }
+  }
+  *err = maxerr;
 }
 
 /* perform half-injection to next coarsest level                */
-void rescal(long kf, long my_num)
-{
-   long ic;
-   long if17;
-   long jf;
-   long jc;
-   long krc;
-   long istart;
-   long iend;
-   long jstart;
-   long jend;
-   double hf;
-   double hc;
-   double s;
-   double s1;
-   double s2;
-   double s3;
-   double s4;
-   double factor;
-   double int1;
-   double int2;
-   double i_int_factor;
-   double j_int_factor;
-   double int_val;
-   long i_off;
-   long j_off;
-   long up_proc;
-   long left_proc;
-   long im;
-   long jm;
-   double temp;
-   double temp2;
-   double **t2a;
-   double **t2b;
-   double **t2c;
-   double *t1a;
-   double *t1b;
-   double *t1c;
-   double *t1d;
-   double *t1e;
-   double *t1f;
-   double *t1g;
-   double *t1h;
+void rescal(long kf, long my_num) {
+  long krc = kf - 1;
+  double hc = lev_res[krc];
+  double hf = lev_res[kf];
+  long i_off = gp[my_num].rownum*ypts_per_proc[krc];
+  long j_off = gp[my_num].colnum*xpts_per_proc[krc];
+  long up_proc = gp[my_num].neighbors[UP];
+  long left_proc = gp[my_num].neighbors[LEFT];
+  long im = (imx[kf]-2)/yprocs;
+  long jm = (jmx[kf]-2)/xprocs;
 
-   krc = kf - 1;
-   hc = lev_res[krc];
-   hf = lev_res[kf];
-   i_off = gp[my_num].rownum*ypts_per_proc[krc];
-   j_off = gp[my_num].colnum*xpts_per_proc[krc];
-   up_proc = gp[my_num].neighbors[UP];
-   left_proc = gp[my_num].neighbors[LEFT];
-   im = (imx[kf]-2)/yprocs;
-   jm = (jmx[kf]-2)/xprocs;
+  long istart = gp[my_num].rlist[krc];
+  long jstart = gp[my_num].rljst[krc];
+  long iend = gp[my_num].rlien[krc] - 1;
+  long jend = gp[my_num].rljen[krc] - 1;
 
-   istart = gp[my_num].rlist[krc];
-   jstart = gp[my_num].rljst[krc];
-   iend = gp[my_num].rlien[krc] - 1;
-   jend = gp[my_num].rljen[krc] - 1;
+  double factor = 4.0 - eig2 * hf * hf;
 
-   factor = 4.0 - eig2 * hf * hf;
+  double** t2a = (double **) q_multi[my_num][kf];
+  double** t2b = (double **) rhs_multi[my_num][kf];
+  double** t2c = (double **) rhs_multi[my_num][krc];
+  long if17 = 2*(istart-1);
 
-   t2a = (double **) q_multi[my_num][kf];
-   t2b = (double **) rhs_multi[my_num][kf];
-   t2c = (double **) rhs_multi[my_num][krc];
-   if17=2*(istart-1);
-   for(ic=istart;ic<=iend;ic++) {
-     if17+=2;
-     i_int_factor = (ic+i_off) * i_int_coeff[krc] * 0.5;
-     jf = 2 * (jstart - 1);
-     t1a = (double *) t2a[if17];
-     t1b = (double *) t2b[if17];
-     t1c = (double *) t2c[ic];
-     t1d = (double *) t2a[if17-1];
-     t1e = (double *) t2a[if17+1];
-     t1f = (double *) t2a[if17-2];
-     t1g = (double *) t2a[if17-3];
-     t1h = (double *) t2b[if17-2];
-     for(jc=jstart;jc<=jend;jc++) {
-       jf+=2;
-       j_int_factor = (jc+j_off)*j_int_coeff[krc] * 0.5;
+   for(long ic = istart; ic <= iend; ic++) {
+    if17 += 2;
+    double i_int_factor = (ic+i_off) * i_int_coeff[krc] * 0.5;
+    long jf = 2 * (jstart - 1);
+    double* t1a = (double *) t2a[if17];
+    double* t1b = (double *) t2b[if17];
+    double* t1c = (double *) t2c[ic];
+    double* t1d = (double *) t2a[if17-1];
+    double* t1e = (double *) t2a[if17+1];
+    double* t1f = (double *) t2a[if17-2];
+    double* t1g = (double *) t2a[if17-3];
+    double* t1h = (double *) t2b[if17-2];
+    for(long jc = jstart; jc <= jend; jc++) {
+      jf+=2;
+      double j_int_factor = (jc+j_off)*j_int_coeff[krc] * 0.5;
 
-/*             method of half-injection uses 2.0 instead of 4.0 */
+      /*             method of half-injection uses 2.0 instead of 4.0 */
+      /* do bilinear interpolation */
+      double s = t1a[jf+1] + t1a[jf-1] + t1d[jf] + t1e[jf];
+      double s1 = 2.0 * (t1b[jf] - s + factor * t1a[jf]);
+      double s2;
+      double s3;
+      double s4;
+      if (((if17 == 2) && (gp[my_num].neighbors[UP] == -1)) || ((jf == 2) && (gp[my_num].neighbors[LEFT] == -1))) {
+        s2 = 0;
+        s3 = 0;
+        s4 = 0;
+      } 
+      else if ((if17 == 2) || (jf == 2)) {
+        double temp;
+	      if (jf == 2) {
+	        temp = q_multi[left_proc][kf][if17][jm-1];
+        } 
+        else {
+          temp = t1a[jf-3];
+        }
 
-/* do bilinear interpolation */
-       s = t1a[jf+1] + t1a[jf-1] + t1d[jf] + t1e[jf];
-       s1 = 2.0 * (t1b[jf] - s + factor * t1a[jf]);
-       if (((if17 == 2) && (gp[my_num].neighbors[UP] == -1)) ||
-	   ((jf == 2) && (gp[my_num].neighbors[LEFT] == -1))) {
-          s2 = 0;
-          s3 = 0;
-          s4 = 0;
-       } else if ((if17 == 2) || (jf == 2)) {
-	  if (jf == 2) {
-	    temp = q_multi[left_proc][kf][if17][jm-1];
-          } else {
-            temp = t1a[jf-3];
-          }
-          s = t1a[jf-1] + temp + t1d[jf-2] + t1e[jf-2];
-          s2 = 2.0 * (t1b[jf-2] - s + factor * t1a[jf-2]);
-	  if (if17 == 2) {
-	    temp = q_multi[up_proc][kf][im-1][jf];
-          } else {
-            temp = t1g[jf];
-          }
-          s = t1f[jf+1]+ t1f[jf-1]+ temp + t1d[jf];
-          s3 = 2.0 * (t1h[jf] - s + factor * t1f[jf]);
-	  if (jf == 2) {
-	    temp = q_multi[left_proc][kf][if17-2][jm-1];
-          } else {
-            temp = t1f[jf-3];
-          }
-	  if (if17 == 2) {
-	    temp2 = q_multi[up_proc][kf][im-1][jf-2];
-          } else {
-            temp2 = t1g[jf-2];
-          }
-          s = t1f[jf-1]+ temp + temp2 + t1d[jf-2];
-          s4 = 2.0 * (t1h[jf-2] - s + factor * t1f[jf-2]);
-       } else {
-          s = t1a[jf-1] + t1a[jf-3] + t1d[jf-2] + t1e[jf-2];
-          s2 = 2.0 * (t1b[jf-2] - s + factor * t1a[jf-2]);
-          s = t1f[jf+1]+ t1f[jf-1]+ t1g[jf] +   t1d[jf];
-          s3 = 2.0 * (t1h[jf] - s + factor * t1f[jf]);
-          s = t1f[jf-1]+ t1f[jf-3]+ t1g[jf-2]+ t1d[jf-2];
-          s4 = 2.0 * (t1h[jf-2] - s + factor * t1f[jf-2]);
-       }
-       int1 = j_int_factor*s4 + (1.0-j_int_factor)*s3;
-       int2 = j_int_factor*s2 + (1.0-j_int_factor)*s1;
-       int_val = i_int_factor*int1+(1.0-i_int_factor)*int2;
-       t1c[jc] = i_int_factor*int1+(1.0-i_int_factor)*int2;
-     }
-   }
+        s = t1a[jf-1] + temp + t1d[jf-2] + t1e[jf-2];
+        s2 = 2.0 * (t1b[jf-2] - s + factor * t1a[jf-2]);
+	      
+        if (if17 == 2) {
+	        temp = q_multi[up_proc][kf][im-1][jf];
+        } 
+        else {
+          temp = t1g[jf];
+        }
+
+        s = t1f[jf+1]+ t1f[jf-1]+ temp + t1d[jf];
+        s3 = 2.0 * (t1h[jf] - s + factor * t1f[jf]);
+	      
+        if (jf == 2) {
+	        temp = q_multi[left_proc][kf][if17-2][jm-1];
+        } 
+        else {
+          temp = t1f[jf-3];
+        }
+	      
+        double temp2;
+        if (if17 == 2) {
+	        temp2 = q_multi[up_proc][kf][im-1][jf-2];
+        } 
+        else {
+          temp2 = t1g[jf-2];
+        }
+        s = t1f[jf-1]+ temp + temp2 + t1d[jf-2];
+        s4 = 2.0 * (t1h[jf-2] - s + factor * t1f[jf-2]);
+      } 
+      else {
+        s = t1a[jf-1] + t1a[jf-3] + t1d[jf-2] + t1e[jf-2];
+        s2 = 2.0 * (t1b[jf-2] - s + factor * t1a[jf-2]);
+        s = t1f[jf+1]+ t1f[jf-1]+ t1g[jf] +   t1d[jf];
+        s3 = 2.0 * (t1h[jf] - s + factor * t1f[jf]);
+        s = t1f[jf-1]+ t1f[jf-3]+ t1g[jf-2]+ t1d[jf-2];
+        s4 = 2.0 * (t1h[jf-2] - s + factor * t1f[jf-2]);
+      }
+      double int1 = j_int_factor*s4 + (1.0-j_int_factor)*s3;
+      double int2 = j_int_factor*s2 + (1.0-j_int_factor)*s1;
+      double int_val = i_int_factor*int1+(1.0-i_int_factor)*int2;
+      t1c[jc] = i_int_factor*int1+(1.0-i_int_factor)*int2;
+    }
+  }
 }
 
 /* perform interpolation and addition to next finest grid       */
@@ -481,27 +410,18 @@ void intadd(long kc, long my_num) {
 
 /* initialize a grid to zero in parallel                        */
 void putz(long k, long my_num) {
-   long i;
-   long j;
-   long istart;
-   long jstart;
-   long iend;
-   long jend;
-   double **t2a;
-   double *t1a;
+  long istart = gp[my_num].rlist[k];
+  long jstart = gp[my_num].rljst[k];
+  long iend = gp[my_num].rlien[k];
+  long jend = gp[my_num].rljen[k];
 
-   istart = gp[my_num].rlist[k];
-   jstart = gp[my_num].rljst[k];
-   iend = gp[my_num].rlien[k];
-   jend = gp[my_num].rljen[k];
-
-   t2a = (double **) q_multi[my_num][k];
-   for (i=istart;i<=iend;i++) {
-     t1a = (double *) t2a[i];
-     for (j=jstart;j<=jend;j++) {
-       t1a[j] = 0.0;
-     }
-   }
+  double** t2a = (double **) q_multi[my_num][k];
+  for (long i = istart; i <= iend; i++) {
+    double* t1a = (double *) t2a[i];
+    for (long j = jstart; j <= jend; j++) {
+      t1a[j] = 0.0;
+    }
+  }
 }
 
 void copy_borders(long k, long pid) {
@@ -675,103 +595,47 @@ void copy_rhs_borders(long k, long procid) {
    }
 }
 
-void copy_red(long k, long procid) {
-   long i;
-   long j;
-   long im;
-   long jm;
-   long lastrow;
-   long lastcol;
-   double **t2a;
-   double **t2b;
-   double *t1a;
-   double *t1b;
+void copy_red_or_black(long k, long procid, bool black) {
+  long im = (imx[k]-2)/yprocs+2;
+  long jm = (jmx[k]-2)/xprocs+2;
+  long lastrow = (imx[k]-2)/yprocs;
+  long lastcol = (jmx[k]-2)/xprocs;
+  double** t2a = (double **) q_multi[procid][k];
 
-   im = (imx[k]-2)/yprocs+2;
-   jm = (jmx[k]-2)/xprocs+2;
-   lastrow = (imx[k]-2)/yprocs;
-   lastcol = (jmx[k]-2)/xprocs;
+  long start1 = black ? 2 : 1;
+  long start2 = black ? 1 : 2;
 
-   t2a = (double **) q_multi[procid][k];
-   j = gp[procid].neighbors[UP];
-   if (j != -1) {
-     t1a = (double *) t2a[0];
-     t1b = (double *) q_multi[j][k][im-2];
-     for (i=2;i<=lastcol;i+=2) {
-       t1a[i] = t1b[i];
-     }
-   }
-   j = gp[procid].neighbors[DOWN];
-   if (j != -1) {
-     t1a = (double *) t2a[im-1];
-     t1b = (double *) q_multi[j][k][1];
-     for (i=1;i<=lastcol;i+=2) {
-       t1a[i] = t1b[i];
-     }
-   }
-   j = gp[procid].neighbors[LEFT];
-   if (j != -1) {
-     t2b = (double **) q_multi[j][k];
-     for (i=2;i<=lastrow;i+=2) {
-       t2a[i][0] = t2b[i][jm-2];
-     }
-   }
-   j = gp[procid].neighbors[RIGHT];
-   if (j != -1) {
-     t2b = (double **) q_multi[j][k];
-     for (i=1;i<=lastrow;i+=2) {
-       t2a[i][jm-1] = t2b[i][1];
-     }
-   }
+  long up = gp[procid].neighbors[UP];
+  if (up != -1) {
+    double* t1a = (double *) t2a[0];
+    double* t1b = (double *) q_multi[up][k][im-2];
+    for (long i = start2; i <= lastcol; i+=2) {
+      t1a[i] = t1b[i];
+    }
+  }
+
+  long down = gp[procid].neighbors[DOWN];
+  if (down != -1) {
+    double* t1a = (double *) t2a[im-1];
+    double* t1b = (double *) q_multi[down][k][1];
+    for (long i = start1; i <= lastcol; i+=2) {
+      t1a[i] = t1b[i];
+    }
+  }
+
+  long left = gp[procid].neighbors[LEFT];
+  if (left != -1) {
+    double** t2b = (double **) q_multi[left][k];
+    for (long i = start2; i <= lastrow; i+=2) {
+      t2a[i][0] = t2b[i][jm-2];
+    }
+  }
+
+  long right = gp[procid].neighbors[RIGHT];
+  if (right != -1) {
+    double** t2b = (double **) q_multi[right][k];
+    for (long i = start1; i <= lastrow; i+=2) {
+      t2a[i][jm-1] = t2b[i][1];
+    }
+  }
 }
-
-void copy_black(long k, long procid) {
-   long i;
-   long j;
-   long im;
-   long jm;
-   long lastrow;
-   long lastcol;
-   double **t2a;
-   double **t2b;
-   double *t1a;
-   double *t1b;
-
-   im = (imx[k]-2)/yprocs+2;
-   jm = (jmx[k]-2)/xprocs+2;
-   lastrow = (imx[k]-2)/yprocs;
-   lastcol = (jmx[k]-2)/xprocs;
-
-   t2a = (double **) q_multi[procid][k];
-   j = gp[procid].neighbors[UP];
-   if (j != -1) {
-     t1a = (double *) t2a[0];
-     t1b = (double *) q_multi[j][k][im-2];
-     for (i=1;i<=lastcol;i+=2) {
-       t1a[i] = t1b[i];
-     }
-   }
-   j = gp[procid].neighbors[DOWN];
-   if (j != -1) {
-     t1a = (double *) t2a[im-1];
-     t1b = (double *) q_multi[j][k][1];
-     for (i=2;i<=lastcol;i+=2) {
-       t1a[i] = t1b[i];
-     }
-   }
-   j = gp[procid].neighbors[LEFT];
-   if (j != -1) {
-     t2b = (double **) q_multi[j][k];
-     for (i=1;i<=lastrow;i+=2) {
-       t2a[i][0] = t2b[i][jm-2];
-     }
-   }
-   j = gp[procid].neighbors[RIGHT];
-   if (j != -1) {
-     t2b = (double **) q_multi[j][k];
-     for (i=2;i<=lastrow;i+=2) {
-       t2a[i][jm-1] = t2b[i][1];
-     }
-   }
-}
-

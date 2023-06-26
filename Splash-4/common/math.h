@@ -20,6 +20,11 @@
 
 #pragma once
 
+#define min(a,b) ((a) < (b) ? (a) : (b))
+#define max(a,b) ((a) > (b) ? (a) : (b))
+#define absf(a)   ((a) > 0.0 ? (a) : -(a))
+#define signf(a)   ((a) > 0.0 ? 1.0 : -1.0)
+
 #if (ARCH == X86_64) || (ARCH == X86)
 
 #define LOG2_INT(type, x) ({					\

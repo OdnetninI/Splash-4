@@ -192,8 +192,7 @@ void intadd(long kc, long my_num);
 void putz(long k, long my_num);
 void copy_borders(long k, long pid);
 void copy_rhs_borders(long k, long procid);
-void copy_red(long k, long procid);
-void copy_black(long k, long procid);
+void copy_red_or_black(long k, long procid, bool black);
 
 /*
  * slave1.C

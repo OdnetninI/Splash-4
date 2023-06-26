@@ -16,7 +16,7 @@
 /****************************************************************************/
 
 /* Does the arakawa jacobian calculation (of the x and y matrices,
-   putting the results in the z matrix) for a subblock.  */
+  putting the results in the z matrix) for a subblock.  */
 #include "../common/common.h"
 
 EXTERN_ENV();
@@ -24,326 +24,191 @@ EXTERN_ENV();
 #include "decs.h"
 
 void jacobcalc(double ***x, double ***y, double ***z, long pid, long firstrow, long lastrow, long firstcol, long lastcol) {
-   double f1;
-   double f2;
-   double f3;
-   double f4;
-   double f5;
-   double f6;
-   double f7;
-   double f8;
-   long iindex;
-   long indexp1;
-   long indexm1;
-   long im1;
-   long ip1;
-   long i;
-   long j;
-   long jj;
-   double **t2b;
-   double **t2c;
-   double *t1a;
-   double *t1b;
-   double *t1c;
-   double *t1d;
-   double *t1e;
-   double *t1f;
-   double *t1g;
+  double** x_local = (double **) x[pid];
+  double** y_local = (double **) y[pid];
+  double** z_local = (double **) z[pid];
 
-  double** t2a = (double **) z[pid];
-  if ((gp[pid].neighbors[UP] == -1) && (gp[pid].neighbors[LEFT] == -1)) {
-    t2a[0][0]=0.0;
+  long up_left_neighbor = gp[pid].neighbors[UPLEFT];
+  long up_right_neighbor = gp[pid].neighbors[UPRIGHT];
+  long down_left_neighbor = gp[pid].neighbors[DOWNLEFT];
+  long down_right_neighbor = gp[pid].neighbors[DOWNRIGHT];
+  long up_neighbor = gp[pid].neighbors[UP];
+  long left_neighbor = gp[pid].neighbors[LEFT];
+  long right_neighbor = gp[pid].neighbors[RIGHT];
+  long down_neighbor = gp[pid].neighbors[DOWN];
+
+  if ((up_neighbor == -1) && (left_neighbor == -1)) {
+    z_local[0][0] = 0.0;
   }
-  if ((gp[pid].neighbors[DOWN] == -1) && (gp[pid].neighbors[LEFT] == -1)) {
-    t2a[im-1][0]=0.0;
+  if ((down_neighbor == -1) && (left_neighbor == -1)) {
+    z_local[im-1][0] = 0.0;
   }
-  if ((gp[pid].neighbors[UP] == -1) && (gp[pid].neighbors[RIGHT] == -1)) {
-    t2a[0][jm-1]=0.0;
+  if ((up_neighbor == -1) && (right_neighbor == -1)) {
+    z_local[0][jm-1] = 0.0;
   }
-  if ((gp[pid].neighbors[DOWN] == -1) && (gp[pid].neighbors[RIGHT] == -1)) {
-    t2a[im-1][jm-1]=0.0;
+  if ((down_neighbor == -1) && (right_neighbor == -1)) {
+    z_local[im-1][jm-1] = 0.0;
   }
 
-  t2a = (double **) x[pid];
-  jj = gp[pid].neighbors[UPLEFT];
-  if (jj != -1) {
-    t2a[0][0]=x[jj][im-2][jm-2];
+  if (up_left_neighbor != -1) {
+    x_local[0][0] = x[up_left_neighbor][im-2][jm-2];
+    y_local[0][0] = y[up_left_neighbor][im-2][jm-2];
   }
-  jj = gp[pid].neighbors[UPRIGHT];
-  if (jj != -1) {
-    t2a[0][jm-1]=x[jj][im-2][1];
+  if (up_right_neighbor != -1) {
+    x_local[0][jm-1] = x[up_right_neighbor][im-2][1];
+    y_local[0][jm-1] = y[up_right_neighbor][im-2][1];
   }
-  jj = gp[pid].neighbors[DOWNLEFT];
-  if (jj != -1) {
-    t2a[im-1][0]=x[jj][1][jm-2];
+  if (down_left_neighbor != -1) {
+    x_local[im-1][0] = x[down_left_neighbor][1][jm-2];
+    y_local[im-1][0] = y[down_left_neighbor][1][jm-2];
   }
-  jj = gp[pid].neighbors[DOWNRIGHT];
-  if (jj != -1) {
-    t2a[im-1][jm-1]=x[jj][1][1];
+  if (down_right_neighbor != -1) {
+    x_local[im-1][jm-1] = x[down_right_neighbor][1][1];
+    y_local[im-1][jm-1] = y[down_right_neighbor][1][1];
   }
 
-  t2a = (double **) y[pid];
-  jj = gp[pid].neighbors[UPLEFT];
-  if (jj != -1) {
-    t2a[0][0]=y[jj][im-2][jm-2];
+  if (up_neighbor == -1) {
+    if (left_neighbor != -1) {
+      x_local[0][0] = x[left_neighbor][0][jm-2];
+      y_local[0][0] = y[left_neighbor][0][jm-2];
+    } else if (down_neighbor != -1) {
+      x_local[im-1][0] = x[down_neighbor][1][0];
+      y_local[im-1][0] = y[down_neighbor][1][0];
+    }
+    if (right_neighbor != -1) {
+      x_local[0][jm-1] = x[right_neighbor][0][1];
+      y_local[0][jm-1] = y[right_neighbor][0][1];
+    } else if (down_neighbor != -1) {
+      x_local[im-1][jm-1] = x[down_neighbor][1][jm-1];
+      y_local[im-1][jm-1] = y[down_neighbor][1][jm-1];
+    }
+  } else if (down_neighbor == -1) {
+    if (left_neighbor != -1) {
+      x_local[im-1][0] = x[left_neighbor][im-1][jm-2];
+      y_local[im-1][0] = y[left_neighbor][im-1][jm-2];
+    } else if (up_neighbor != -1) {
+      x_local[0][0] = x[up_neighbor][im-2][0];
+      y_local[0][0] = y[up_neighbor][im-2][0];
+    }
+    if (right_neighbor != -1) {
+      x_local[im-1][jm-1] = x[right_neighbor][im-1][1];
+      y_local[im-1][jm-1] = y[right_neighbor][im-1][1];
+    } else if (up_neighbor != -1) {
+      x_local[0][jm-1] = x[up_neighbor][im-2][jm-1];
+      y_local[0][jm-1] = y[up_neighbor][im-2][jm-1];
+    }
+  } else if (left_neighbor == -1) {
+    if (left_neighbor != -1) {
+      x_local[0][0] = x[left_neighbor][im-2][0];
+      y_local[0][0] = y[left_neighbor][im-2][0];
+    }
+    if (down_neighbor != -1) {
+      x_local[im-1][0] = x[down_neighbor][1][0];
+      y_local[im-1][0] = y[down_neighbor][1][0];
+    }
+  } else if (right_neighbor == -1) {
+    if (up_neighbor != -1) {
+      x_local[0][jm-1] = x[up_neighbor][im-2][jm-1];
+      y_local[0][jm-1] = y[up_neighbor][im-2][jm-1];
+    }
+    if (down_neighbor != -1) {
+      x_local[im-1][jm-1] = x[down_neighbor][1][jm-1];
+      y_local[im-1][jm-1] = y[down_neighbor][1][jm-1];
+    }
   }
-  jj = gp[pid].neighbors[UPRIGHT];
-  if (jj != -1) {
-    t2a[0][jm-1]=y[jj][im-2][1];
+
+  if (up_neighbor != -1) {
+    double* x_local_0 = (double *) x_local[0];
+    double* x_neighbor = (double *) x[up_neighbor][im-2];
+    for (long col = 1; col <= lastcol; col++) {
+      x_local_0[col] = x_neighbor[col];
+    }
+    double* y_local_0 = (double *) y_local[0];
+    double* y_neighbor = (double *) y[up_neighbor][im-2];
+    for (long col = 1; col <= lastcol; col++) {
+      y_local_0[col] = y_neighbor[col];
+    }
   }
-  jj = gp[pid].neighbors[DOWNLEFT];
-  if (jj != -1) {
-    t2a[im-1][0]=y[jj][1][jm-2];
+  if (down_neighbor != -1) {
+    double* x_local_last = (double *) x_local[im-1];
+    double* x_neighbor = (double *) x[down_neighbor][1];
+    for (long col = 1; col <= lastcol; col++) {
+      x_local_last[col] = x_neighbor[col];
+    }
+    double* y_local_last = (double *) y_local[im-1];
+    double* y_neighbor = (double *) y[down_neighbor][1];
+    for (long col = 1; col <= lastcol; col++) {
+      y_local_last[col] = y_neighbor[col];
+    }
   }
-  jj = gp[pid].neighbors[DOWNRIGHT];
-  if (jj != -1) {
-    t2a[im-1][jm-1]=y[jj][1][1];
+  if (left_neighbor != -1) {
+    double** x_neighbor = (double **) x[left_neighbor];
+    for (long row = 1; row <= lastrow; row++) {
+      x_local[row][0] = x_neighbor[row][jm-2];
+    }
+    double** y_neighbor = (double **) y[left_neighbor];
+    for (long row = 1; row <= lastrow; row++) {
+      y_local[row][0] = y_neighbor[row][jm-2];
+    }
   }
-  
-  t2a = (double **) x[pid];
-  if (gp[pid].neighbors[UP] == -1) {
-     jj = gp[pid].neighbors[LEFT];
-     if (jj != -1) {
-       t2a[0][0] = x[jj][0][jm-2];
-     } else {
-       jj = gp[pid].neighbors[DOWN];
-       if (jj != -1) {
-         t2a[im-1][0] = x[jj][1][0];
-       }
-     }
-     jj = gp[pid].neighbors[RIGHT];
-     if (jj != -1) {
-       t2a[0][jm-1] = x[jj][0][1];
-     } else {
-       jj = gp[pid].neighbors[DOWN];
-       if (jj != -1) {
-         t2a[im-1][jm-1] = x[jj][1][jm-1];
-       }
-     }
-   } else if (gp[pid].neighbors[DOWN] == -1) {
-     jj = gp[pid].neighbors[LEFT];
-     if (jj != -1) {
-       t2a[im-1][0] = x[jj][im-1][jm-2];
-     } else {
-       jj = gp[pid].neighbors[UP];
-       if (jj != -1) {
-         t2a[0][0] = x[jj][im-2][0];
-       }
-     }
-     jj = gp[pid].neighbors[RIGHT];
-     if (jj != -1) {
-       t2a[im-1][jm-1] = x[jj][im-1][1];
-     } else {
-       jj = gp[pid].neighbors[UP];
-       if (jj != -1) {
-         t2a[0][jm-1] = x[jj][im-2][jm-1];
-       }
-     }
-   } else if (gp[pid].neighbors[LEFT] == -1) {
-     jj = gp[pid].neighbors[UP];
-     if (jj != -1) {
-       t2a[0][0] = x[jj][im-2][0];
-     }
-     jj = gp[pid].neighbors[DOWN];
-     if (jj != -1) {
-       t2a[im-1][0] = x[jj][1][0];
-     }
-   } else if (gp[pid].neighbors[RIGHT] == -1) {
-     jj = gp[pid].neighbors[UP];
-     if (jj != -1) {
-       t2a[0][jm-1] = x[jj][im-2][jm-1];
-     }
-     jj = gp[pid].neighbors[DOWN];
-     if (jj != -1) {
-       t2a[im-1][jm-1] = x[jj][1][jm-1];
-     }
-   }
+  if (right_neighbor != -1) {
+    double** x_neighbor = (double **) x[right_neighbor];
+    for (long row = 1; row <= lastrow; row++) {
+      x_local[row][jm-1] = x_neighbor[row][1];
+    }
+    double** y_neighbor = (double **) y[right_neighbor];
+    for (long row = 1; row <= lastrow; row++) {
+      y_local[row][jm-1] = y_neighbor[row][1];
+    }
+  }
 
-   t2a = (double **) y[pid];
-   if (gp[pid].neighbors[UP] == -1) {
-     jj = gp[pid].neighbors[LEFT];
-     if (jj != -1) {
-       t2a[0][0] = y[jj][0][jm-2];
-     } else {
-       jj = gp[pid].neighbors[DOWN];
-       if (jj != -1) {
-         t2a[im-1][0] = y[jj][1][0];
-       }
-     }
-     jj = gp[pid].neighbors[RIGHT];
-     if (jj != -1) {
-       t2a[0][jm-1] = y[jj][0][1];
-     } else {
-       jj = gp[pid].neighbors[DOWN];
-       if (jj != -1) {
-         t2a[im-1][jm-1] = y[jj][1][jm-1];
-       }
-     }
-   } else if (gp[pid].neighbors[DOWN] == -1) {
-     jj = gp[pid].neighbors[LEFT];
-     if (jj != -1) {
-       t2a[im-1][0] = y[jj][im-1][jm-2];
-     } else {
-       jj = gp[pid].neighbors[UP];
-       if (jj != -1) {
-         t2a[0][0] = y[jj][im-2][0];
-       }
-     }
-     jj = gp[pid].neighbors[RIGHT];
-     if (jj != -1) {
-       t2a[im-1][jm-1] = y[jj][im-1][1];
-     } else {
-       jj = gp[pid].neighbors[UP];
-       if (jj != -1) {
-         t2a[0][jm-1] = y[jj][im-2][jm-1];
-       }
-     }
-   } else if (gp[pid].neighbors[LEFT] == -1) {
-     jj = gp[pid].neighbors[UP];
-     if (jj != -1) {
-       t2a[0][0] = y[jj][im-2][0];
-     }
-     jj = gp[pid].neighbors[DOWN];
-     if (jj != -1) {
-       t2a[im-1][0] = y[jj][1][0];
-     }
-   } else if (gp[pid].neighbors[RIGHT] == -1) {
-     jj = gp[pid].neighbors[UP];
-     if (jj != -1) {
-       t2a[0][jm-1] = y[jj][im-2][jm-1];
-     }
-     jj = gp[pid].neighbors[DOWN];
-     if (jj != -1) {
-       t2a[im-1][jm-1] = y[jj][1][jm-1];
-     }
-   }
+  for (long row = firstrow; row <= lastrow; row++) {
+    long next_row = row+1;
+    long prev_row = row-1;
+    double* x_local_i = (double *) x_local[row];
+    double* y_local_i = (double *) y_local[row];
+    double* z_local_i = (double *) z_local[row];
+    double* y_local_next = (double *) y_local[next_row];
+    double* y_local_prev = (double *) y_local[prev_row];
+    double* x_local_next = (double *) x_local[next_row];
+    double* x_local_prev = (double *) x_local[prev_row];
+    for (long col = firstcol; col <= lastcol; col++) {
+      long col_next = col+1;
+      long col_prev = col-1;
+      double f1 = (y_local_i[col_prev]    + y_local_next[col_prev] - y_local_i[col_next]    - y_local_next[col_next]) * (x_local_next[col]      - x_local_i[col]        );
+      double f2 = (y_local_prev[col_prev] + y_local_i[col_prev]    - y_local_prev[col_next] - y_local_i[col_next]   ) * (x_local_i[col]         - x_local_prev[col]     );
+      double f3 = (y_local_next[col]      + y_local_next[col_next] - y_local_prev[col]      - y_local_prev[col_next]) * (x_local_i[col_next]    - x_local_i[col]        );
+      double f4 = (y_local_next[col_prev] + y_local_next[col]      - y_local_prev[col_prev] - y_local_prev[col]     ) * (x_local_i[col]         - x_local_i[col_prev]   );
+      double f5 = (y_local_next[col]      - y_local_i[col_next]                                                     ) * (x_local_next[col_next] - x_local_i[col]        );
+      double f6 = (y_local_i[col_prev]    - y_local_prev[col]                                                       ) * (x_local_i[col]         - x_local_prev[col_prev]);
+      double f7 = (y_local_i[col_next]    - y_local_prev[col]                                                       ) * (x_local_prev[col_next] - x_local_i[col]        );
+      double f8 = (y_local_next[col]      - y_local_i[col_prev]                                                     ) * (x_local_i[col]         - x_local_next[col_prev]);
 
-   j = gp[pid].neighbors[UP];
-   if (j != -1) {
-     t1a = (double *) t2a[0];
-     t1b = (double *) y[j][im-2];
-     for (i=1;i<=lastcol;i++) {
-       t1a[i] = t1b[i];
-     }
-   }
-   j = gp[pid].neighbors[DOWN];
-   if (j != -1) {
-     t1a = (double *) t2a[im-1];
-     t1b = (double *) y[j][1];
-     for (i=1;i<=lastcol;i++) {
-       t1a[i] = t1b[i];
-     }
-   }
-   j = gp[pid].neighbors[LEFT];
-   if (j != -1) {
-     t2b = (double **) y[j];
-     for (i=1;i<=lastrow;i++) {
-       t2a[i][0] = t2b[i][jm-2];
-     }
-   }
-   j = gp[pid].neighbors[RIGHT];
-   if (j != -1) {
-     t2b = (double **) y[j];
-     for (i=1;i<=lastrow;i++) {
-       t2a[i][jm-1] = t2b[i][1];
-     }
-   }
+      z_local_i[col] = factjacob*(f1+f2+f3+f4+f5+f6+f7+f8);
+    }
+  }
 
-   t2a = (double **) x[pid];
-   j = gp[pid].neighbors[UP];
-   if (j != -1) {
-     t1a = (double *) t2a[0];
-     t1b = (double *) x[j][im-2];
-     for (i=1;i<=lastcol;i++) {
-       t1a[i] = t1b[i];
-     }
-   }
-   j = gp[pid].neighbors[DOWN];
-   if (j != -1) {
-     t1a = (double *) t2a[im-1];
-     t1b = (double *) x[j][1];
-     for (i=1;i<=lastcol;i++) {
-       t1a[i] = t1b[i];
-     }
-   }
-   j = gp[pid].neighbors[LEFT];
-   if (j != -1) {
-     t2b = (double **) x[j];
-     for (i=1;i<=lastrow;i++) {
-       t2a[i][0] = t2b[i][jm-2];
-     }
-   }
-   j = gp[pid].neighbors[RIGHT];
-   if (j != -1) {
-     t2b = (double **) x[j];
-     for (i=1;i<=lastrow;i++) {
-       t2a[i][jm-1] = t2b[i][1];
-     }
-   }
-
-   t2a = (double **) x[pid];
-   t2b = (double **) y[pid];
-   t2c = (double **) z[pid];
-   for (i=firstrow;i<=lastrow;i++) {
-     ip1 = i+1;
-     im1 = i-1;
-     t1a = (double *) t2a[i];
-     t1b = (double *) t2b[i];
-     t1c = (double *) t2c[i];
-     t1d = (double *) t2b[ip1];
-     t1e = (double *) t2b[im1];
-     t1f = (double *) t2a[ip1];
-     t1g = (double *) t2a[im1];
-     for (iindex=firstcol;iindex<=lastcol;iindex++) {
-       indexp1 = iindex+1;
-       indexm1 = iindex-1;
-       f1 = (t1b[indexm1]+t1d[indexm1]-
-             t1b[indexp1]-t1d[indexp1])*
-            (t1f[iindex]-t1a[iindex]);
-       f2 = (t1e[indexm1]+t1b[indexm1]-
-             t1e[indexp1]-t1b[indexp1])*
-            (t1a[iindex]-t1g[iindex]);
-       f3 = (t1d[iindex]+t1d[indexp1]-
-             t1e[iindex]-t1e[indexp1])*
-            (t1a[indexp1]-t1a[iindex]);
-       f4 = (t1d[indexm1]+t1d[iindex]-
-             t1e[indexm1]-t1e[iindex])*
-            (t1a[iindex]-t1a[indexm1]);
-       f5 = (t1d[iindex]-t1b[indexp1])*
-            (t1f[indexp1]-t1a[iindex]);
-       f6 = (t1b[indexm1]-t1e[iindex])*
-            (t1a[iindex]-t1g[indexm1]);
-       f7 = (t1b[indexp1]-t1e[iindex])*
-            (t1g[indexp1]-t1a[iindex]);
-       f8 = (t1d[iindex]-t1b[indexm1])*
-            (t1a[iindex]-t1f[indexm1]);
-
-       t1c[iindex] = factjacob*(f1+f2+f3+f4+f5+f6+f7+f8);
-     }
-   }
-
-   if (gp[pid].neighbors[UP] == -1) {
-     t1c = (double *) t2c[0];
-     for (j=firstcol;j<=lastcol;j++) {
-       t1c[j] = 0.0;
-     }
-   }
-   if (gp[pid].neighbors[DOWN] == -1) {
-     t1c = (double *) t2c[im-1];
-     for (j=firstcol;j<=lastcol;j++) {
-       t1c[j] = 0.0;
-     }
-   }
-   if (gp[pid].neighbors[LEFT] == -1) {
-     for (j=firstrow;j<=lastrow;j++) {
-       t2c[j][0] = 0.0;
-     }
-   }
-   if (gp[pid].neighbors[RIGHT] == -1) {
-     for (j=firstrow;j<=lastrow;j++) {
-       t2c[j][jm-1] = 0.0;
-     }
-   }
-
+  if (up_neighbor == -1) {
+    double* z_local_0 = (double *) z_local[0];
+    for (long col = firstcol; col <= lastcol; col++) {
+      z_local_0[col] = 0.0;
+    }
+  }
+  if (down_neighbor == -1) {
+    double* z_local_last = (double *) z_local[im-1];
+    for (long col = firstcol; col <= lastcol; col++) {
+      z_local_last[col] = 0.0;
+    }
+  }
+  if (left_neighbor == -1) {
+    for (long row = firstrow; row <= lastrow; row++) {
+      z_local[row][0] = 0.0;
+    }
+  }
+  if (right_neighbor == -1) {
+    for (long row = firstrow; row <= lastrow; row++) {
+      z_local[row][jm-1] = 0.0;
+    }
+  }
 }
 

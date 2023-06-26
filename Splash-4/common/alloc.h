@@ -32,9 +32,10 @@
       mem;					\
     })						\
   
-#define CLOCK(clock) {				\
-    long time();				\
-    (clock) = time(0);				\
-  }						\
-
+#define CLOCK(clock) {							     \
+    struct timeval FullTime;						     \
+    gettimeofday(&FullTime, NULL);					     \
+    (clock) = (unsigned long)(FullTime.tv_usec + FullTime.tv_sec * 1000000); \
+  }									     \
+    
 #endif /* __SPLASH_4__ALLOC_H__ */

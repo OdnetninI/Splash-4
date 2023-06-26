@@ -47,7 +47,6 @@ MAIN_ENV();
 #define DEFAULT_N                         512
 #define DEFAULT_THREADS                     1
 #define DEFAULT_B                          16
-#define min(a,b) ((a) < (b) ? (a) : (b))
 
 #define ERROR_ALLOWED                0.000001
 

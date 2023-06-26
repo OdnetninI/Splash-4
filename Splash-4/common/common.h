@@ -35,7 +35,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <math.h>
-
+#include <sys/time.h>
 
 #define PAGE_SIZE 4096
 #define __MAX_THREADS__ 256
@@ -54,9 +54,9 @@
 #include "thread.h"
 #include "math.h"
 
-#define IF_EXIT(c, msg) {			\
+#define IF_EXIT(c, ...) {			\
     if (c) {					\
-      fprintf(stderr, msg);			\
+      fprintf(stderr, __VA_ARGS__);			\
       exit(-1);					\
     }						\
   }						\

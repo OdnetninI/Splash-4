@@ -67,4 +67,16 @@
     })								\
 
 
+#define ATOMIC_MAX_DOUBLE(address, value) ({	      \
+      _NOTE_START_CMPXCHG();					\
+      double ___oldValue = LOAD(*address);		\
+      double ___newValue = value;	           		\
+      do {							      \
+        if (___newValue <= ___oldValue) break;        \
+      } while(!_CAS(address, ___oldValue, ___newValue));	\
+      _NOTE_END_CMPXCHG();					\
+      ___oldValue;						\
+    })								\
+
+
 #endif /* __SPLASH_4__ATOMIC_H__ */
