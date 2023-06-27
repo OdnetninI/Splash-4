@@ -164,8 +164,8 @@ void jacobcalc2(double ****x, double ****y, double ****z, long psiindex, long pi
   }
 
   for (long row = firstrow; row <= lastrow; row++) {
-    long next_row = row+1;
-    long prev_row = row-1;
+    long next_row = row + 1;
+    long prev_row = row - 1;
     double* x_local_i = (double *) x_local[row];
     double* y_local_i = (double *) y_local[row];
     double* z_local_i = (double *) z_local[row];
@@ -174,8 +174,8 @@ void jacobcalc2(double ****x, double ****y, double ****z, long psiindex, long pi
     double* x_local_next = (double *) x_local[next_row];
     double* x_local_prev = (double *) x_local[prev_row];
     for (long col = firstcol; col <= lastcol; col++) {
-      long col_next = col+1;
-      long col_prev = col-1;
+      long col_next = col + 1;
+      long col_prev = col - 1;
       double f1 = (y_local_i[col_prev]    + y_local_next[col_prev] - y_local_i[col_next]    - y_local_next[col_next]) * (x_local_next[col]      - x_local_i[col]        );
       double f2 = (y_local_prev[col_prev] + y_local_i[col_prev]    - y_local_prev[col_next] - y_local_i[col_next]   ) * (x_local_i[col]         - x_local_prev[col]     );
       double f3 = (y_local_next[col]      + y_local_next[col_next] - y_local_prev[col]      - y_local_prev[col_next]) * (x_local_i[col_next]    - x_local_i[col]        );

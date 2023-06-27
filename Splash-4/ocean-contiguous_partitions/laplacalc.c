@@ -23,90 +23,76 @@ EXTERN_ENV();
 #include "decs.h"
 
 void laplacalc(long procid, double ****x, double ****z, long psiindex, long firstrow, long lastrow, long firstcol, long lastcol) {
-   long iindex;
-   long indexp1;
-   long indexm1;
-   long ip1;
-   long im1;
-   long i;
-   long j;
-   double **t2b;
-   double *t1a;
-   double *t1b;
-   double *t1c;
-   double *t1d;
+  double** x_local = (double **) x[procid][psiindex];
+  double** z_local = (double **) z[procid][psiindex];
 
-  double** t2a = (double **) x[procid][psiindex];
-   j = gp[procid].neighbors[UP];
-   if (j != -1) {
-     t1a = (double *) t2a[0];
-     t1b = (double *) x[j][psiindex][im-2];
-     for (i=1;i<=lastcol;i++) {
-       t1a[i] = t1b[i];
-     }
-   }
-   j = gp[procid].neighbors[DOWN];
-   if (j != -1) {
-     t1a = (double *) t2a[im-1];
-     t1b = (double *) x[j][psiindex][1];
-     for (i=1;i<=lastcol;i++) {
-       t1a[i] = t1b[i];
-     }
-   }
-   j = gp[procid].neighbors[LEFT];
-   if (j != -1) {
-     t2b = (double **) x[j][psiindex];
-     for (i=1;i<=lastrow;i++) {
-       t2a[i][0] = t2b[i][jm-2];
-     }
-   }
-   j = gp[procid].neighbors[RIGHT];
-   if (j != -1) {
-     t2b = (double **) x[j][psiindex];
-     for (i=1;i<=lastrow;i++) {
-       t2a[i][jm-1] = t2b[i][1];
-     }
-   }
+  long up_neighbor = gp[procid].neighbors[UP];
+  long down_neighbor = gp[procid].neighbors[DOWN];
+  long left_neighbor = gp[procid].neighbors[LEFT];
+  long right_neighbor = gp[procid].neighbors[RIGHT];
 
-   t2a = (double **) x[procid][psiindex];
-   t2b = (double **) z[procid][psiindex];
-   for (i=firstrow;i<=lastrow;i++) {
-     ip1 = i+1;
-     im1 = i-1;
-     t1a = (double *) t2a[i];
-     t1b = (double *) t2b[i];
-     t1c = (double *) t2a[ip1];
-     t1d = (double *) t2a[im1];
-     for (iindex=firstcol;iindex<=lastcol;iindex++) {
-       indexp1 = iindex+1;
-       indexm1 = iindex-1;
-       t1b[iindex] = factlap*(t1c[iindex]+
-			      t1d[iindex]+t1a[indexp1]+
-                              t1a[indexm1]-4.*t1a[iindex]);
-     }
-   }
+  if (up_neighbor != -1) {
+    double* x_local_0 = (double *) x_local[0];
+    double* x_neighbor = (double *) x[up_neighbor][psiindex][im-2];
+    for (long col = 1; col <= lastcol; col++) {
+      x_local_0[col] = x_neighbor[col];
+    }
+  }
+  if (down_neighbor != -1) {
+    double* x_local_0 = (double *) x_local[im-1];
+    double* x_neighbor = (double *) x[down_neighbor][psiindex][1];
+    for (long col = 1; col <= lastcol; col++) {
+      x_local_0[col] = x_neighbor[col];
+    }
+  }
+  if (left_neighbor != -1) {
+    double** x_neighbor = (double **) x[left_neighbor][psiindex];
+    for (long row = 1; row <= lastrow; row++) {
+      x_local[row][0] = x_neighbor[row][jm-2];
+    }
+  }
+  if (right_neighbor != -1) {
+    double** x_neighbor = (double **) x[right_neighbor][psiindex];
+    for (long row = 1; row <= lastrow; row++) {
+      x_local[row][jm-1] = x_neighbor[row][1];
+    }
+  }
 
-   if (gp[procid].neighbors[UP] == -1) {
-     t1b = (double *) t2b[0];
-     for (j=firstcol;j<=lastcol;j++) {
-       t1b[j] = 0.0;
-     }
-   }
-   if (gp[procid].neighbors[DOWN] == -1) {
-     t1b = (double *) t2b[im-1];
-     for (j=firstcol;j<=lastcol;j++) {
-       t1b[j] = 0.0;
-     }
-   }
-   if (gp[procid].neighbors[LEFT] == -1) {
-     for (j=firstrow;j<=lastrow;j++) {
-       t2b[j][0] = 0.0;
-     }
-   }
-   if (gp[procid].neighbors[RIGHT] == -1) {
-     for (j=firstrow;j<=lastrow;j++) {
-       t2b[j][jm-1] = 0.0;
-     }
-   }
+  for (long row = firstrow; row <= lastrow; row++) {
+    long row_next = row + 1;
+    long row_prev = row - 1;
+    double* x_local_i = (double *) x_local[row];
+    double* z_local_i = (double *) z_local[row];
+    double* x_local_next = (double *) x_local[row_next];
+    double* x_local_prev = (double *) x_local[row_prev];
+    for (long col = firstcol; col <= lastcol; col++) {
+      long col_next = col + 1;
+      long col_prev = col - 1;
+      z_local_i[col] = factlap*(x_local_next[col]+x_local_prev[col]+x_local_i[col_next]+ x_local_i[col_prev]-4.*x_local_i[col]);
+    }
+  }
+
+  if (up_neighbor == -1) {
+    double* z_local_0 = (double *) z_local[0];
+    for (long col = 1; col <= lastcol; col++) {
+      z_local_0[col] = 0.0;
+    }
+  }
+  if (down_neighbor == -1) {
+    double* z_local_last = (double *) z_local[im-1];
+    for (long col = 1; col <= lastcol; col++) {
+      z_local_last[col] = 0.0;
+    }
+  }
+  if (left_neighbor == -1) {
+    for (long row = 1; row <= lastrow; row++) {
+      z_local[row][0] = 0.0;
+    }
+  }
+  if (right_neighbor == -1) {
+    for (long row = 1; row <= lastrow; row++) {
+      z_local[row][jm-1] = 0.0;
+    }
+  }
 
 }

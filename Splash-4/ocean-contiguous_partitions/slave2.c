@@ -29,6 +29,11 @@ void slave2(long procid, long firstrow, long lastrow, long numrows, long firstco
   long i_off = gp[procid].rownum*numrows;
   long j_off = gp[procid].colnum*numcols;
 
+  long up_neighbor = gp[procid].neighbors[UP];
+  long down_neighbor = gp[procid].neighbors[DOWN];
+  long left_neighbor = gp[procid].neighbors[LEFT];
+  long right_neighbor = gp[procid].neighbors[RIGHT];
+
   /*   ***************************************************************
 
           f i r s t     p h a s e   (of timestep calculation)
@@ -43,18 +48,18 @@ void slave2(long procid, long firstrow, long lastrow, long numrows, long firstco
    the original equations  */
 
   for(long psiindex = 0; psiindex <= 1; psiindex++) {
-    double** t2a = (double **) work1[procid][psiindex];
-    if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-      t2a[0][0] = 0;
+    double** work1_local = (double **) work1[procid][psiindex];
+    if ((up_neighbor == -1) && (left_neighbor == -1)) {
+      work1_local[0][0] = 0;
     }
-    if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-      t2a[im-1][0] = 0;
+    if ((down_neighbor == -1) && (left_neighbor == -1)) {
+      work1_local[im-1][0] = 0;
     }
-    if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-      t2a[0][jm-1] = 0;
+    if ((up_neighbor == -1) && (right_neighbor == -1)) {
+      work1_local[0][jm-1] = 0;
     }
-    if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-      t2a[im-1][jm-1] = 0;
+    if ((down_neighbor == -1) && (right_neighbor == -1)) {
+      work1_local[im-1][jm-1] = 0;
     }
     laplacalc(procid,psi,work1,psiindex,firstrow,lastrow,firstcol,lastcol);
   }
@@ -90,18 +95,18 @@ void slave2(long procid, long firstrow, long lastrow, long numrows, long firstco
    calculation to compute the friction terms  */
 
   for(long psiindex = 0; psiindex <= 1; psiindex++) {
-    double** t2a = (double **) work7[procid][psiindex];
-    if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-      t2a[0][0] = 0;
+    double** work7_local = (double **) work7[procid][psiindex];
+    if ((up_neighbor == -1) && (left_neighbor == -1)) {
+      work7_local[0][0] = 0;
     }
-    if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-      t2a[im-1][0] = 0;
+    if ((down_neighbor == -1) && (left_neighbor == -1)) {
+      work7_local[im-1][0] = 0;
     }
-    if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-      t2a[0][jm-1] = 0;
+    if ((up_neighbor == -1) && (right_neighbor == -1)) {
+      work7_local[0][jm-1] = 0;
     }
-    if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-      t2a[im-1][jm-1] = 0;
+    if ((down_neighbor == -1) && (right_neighbor == -1)) {
+      work7_local[im-1][jm-1] = 0;
     }
     laplacalc(procid,psim,work7,psiindex,firstrow,lastrow,firstcol,lastcol);
   }
@@ -112,43 +117,43 @@ void slave2(long procid, long firstrow, long lastrow, long numrows, long firstco
    one-dimenional f array  */
 
   for(long psiindex = 0; psiindex <= 1; psiindex++) {
-    double** t2a = (double **) work1[procid][psiindex];
-    if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-      t2a[0][0] = t2a[0][0] + f[0];
+    double** work1_local = (double **) work1[procid][psiindex];
+    if ((up_neighbor == -1) && (left_neighbor == -1)) {
+      work1_local[0][0] = work1_local[0][0] + f[0];
     }
-    if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-      t2a[im-1][0] = t2a[im-1][0] + f[0];
+    if ((down_neighbor == -1) && (left_neighbor == -1)) {
+      work1_local[im-1][0] = work1_local[im-1][0] + f[0];
     }
-    if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-      t2a[0][jm-1] = t2a[0][jm-1] + f[jmx[numlev-1]-1];
+    if ((up_neighbor == -1) && (right_neighbor == -1)) {
+      work1_local[0][jm-1] = work1_local[0][jm-1] + f[jmx[numlev-1]-1];
     }
-    if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-      t2a[im-1][jm-1]=t2a[im-1][jm-1] + f[jmx[numlev-1]-1];
+    if ((down_neighbor == -1) && (right_neighbor == -1)) {
+      work1_local[im-1][jm-1]=work1_local[im-1][jm-1] + f[jmx[numlev-1]-1];
     }
-    if (gp[procid].neighbors[UP] == -1) {
+    if (up_neighbor == -1) {
       for(long j = firstcol; j <= lastcol; j++) {
-        t2a[0][j] = t2a[0][j] + f[j+j_off];
+        work1_local[0][j] = work1_local[0][j] + f[j+j_off];
       }
     }
-    if (gp[procid].neighbors[DOWN] == -1) {
+    if (down_neighbor == -1) {
       for(long j = firstcol; j <= lastcol; j++) {
-        t2a[im-1][j] = t2a[im-1][j] + f[j+j_off];
+        work1_local[im-1][j] = work1_local[im-1][j] + f[j+j_off];
       }
     }
-    if (gp[procid].neighbors[LEFT] == -1) {
+    if (left_neighbor == -1) {
       for(long j = firstrow; j <= lastrow; j++) {
-        t2a[j][0] = t2a[j][0] + f[j+i_off];
+        work1_local[j][0] = work1_local[j][0] + f[j+i_off];
       }
     }
-    if (gp[procid].neighbors[RIGHT] == -1) {
+    if (right_neighbor == -1) {
       for(long j = firstrow; j <= lastrow; j++) {
-        t2a[j][jm-1] = t2a[j][jm-1] + f[j+i_off];
+        work1_local[j][jm-1] = work1_local[j][jm-1] + f[j+i_off];
       }
     }
     for(long i = firstrow; i <= lastrow; i++) {
-      double* t1a = (double *) t2a[i];
-      for(long iindex = firstcol; iindex <= lastcol; iindex++) {
-        t1a[iindex]=t1a[iindex] + f[iindex+j_off];
+      double* work1_local_i = (double *) work1_local[i];
+      for(long col = firstcol; col <= lastcol; col++) {
+        work1_local_i[col] = work1_local_i[col] + f[col+j_off];
       }
     }
   }
@@ -216,83 +221,83 @@ void slave2(long procid, long firstrow, long lastrow, long numrows, long firstco
   double hinv = 1.0/h;
   double h1inv = 1.0/h1;
 
-  double** t2a = (double **) ga[procid];
-  double** t2b = (double **) gb[procid];
-  double** t2c = (double **) work5[procid][0];
-  double** t2d = (double **) work5[procid][1];
-  double** t2e = (double **) work7[procid][0];
-  double** t2f = (double **) work7[procid][1];
-  double** t2g = (double **) work6[procid];
-  double** t2h = (double **) tauz[procid];
-  if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-    t2a[0][0] = t2c[0][0]-t2d[0][0] + eig2*t2g[0][0]+h1inv*t2h[0][0] + lf*t2e[0][0]-lf*t2f[0][0];
-    t2b[0][0] = hh1*t2c[0][0]+hh3*t2d[0][0] + hinv*t2h[0][0]+lf*hh1*t2e[0][0] + lf*hh3*t2f[0][0];
+  double** ga_local = (double **) ga[procid];
+  double** gb_local = (double **) gb[procid];
+  double** work5_local_0 = (double **) work5[procid][0];
+  double** work5_local_1 = (double **) work5[procid][1];
+  double** work7_local_0 = (double **) work7[procid][0];
+  double** work7_local_1 = (double **) work7[procid][1];
+  double** work6_local = (double **) work6[procid];
+  double** tauz_local = (double **) tauz[procid];
+  if ((up_neighbor == -1) && (left_neighbor == -1)) {
+    ga_local[0][0] = work5_local_0[0][0]-work5_local_1[0][0] + eig2*work6_local[0][0]+h1inv*tauz_local[0][0] + lf*work7_local_0[0][0]-lf*work7_local_1[0][0];
+    gb_local[0][0] = hh1*work5_local_0[0][0]+hh3*work5_local_1[0][0] + hinv*tauz_local[0][0]+lf*hh1*work7_local_0[0][0] + lf*hh3*work7_local_1[0][0];
   }
-  if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-    t2a[im-1][0] = t2c[im-1][0]-t2d[im-1][0] + eig2*t2g[im-1][0] + h1inv*t2h[im-1][0] + lf*t2e[im-1][0] - lf*t2f[im-1][0];
-    t2b[im-1][0] = hh1*t2c[im-1][0] + hh3*t2d[im-1][0] + hinv*t2h[im-1][0] + lf*hh1*t2e[im-1][0] + lf*hh3*t2f[im-1][0];
+  if ((down_neighbor == -1) && (left_neighbor == -1)) {
+    ga_local[im-1][0] = work5_local_0[im-1][0]-work5_local_1[im-1][0] + eig2*work6_local[im-1][0] + h1inv*tauz_local[im-1][0] + lf*work7_local_0[im-1][0] - lf*work7_local_1[im-1][0];
+    gb_local[im-1][0] = hh1*work5_local_0[im-1][0] + hh3*work5_local_1[im-1][0] + hinv*tauz_local[im-1][0] + lf*hh1*work7_local_0[im-1][0] + lf*hh3*work7_local_1[im-1][0];
   }
-  if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-    t2a[0][jm-1] = t2c[0][jm-1]-t2d[0][jm-1]+ eig2*t2g[0][jm-1]+h1inv*t2h[0][jm-1] + lf*t2e[0][jm-1]-lf*t2f[0][jm-1];
-    t2b[0][jm-1] = hh1*t2c[0][jm-1] + hh3*t2d[0][jm-1]+hinv*t2h[0][jm-1] + lf*hh1*t2e[0][jm-1]+lf*hh3*t2f[0][jm-1];
+  if ((up_neighbor == -1) && (right_neighbor == -1)) {
+    ga_local[0][jm-1] = work5_local_0[0][jm-1]-work5_local_1[0][jm-1]+ eig2*work6_local[0][jm-1]+h1inv*tauz_local[0][jm-1] + lf*work7_local_0[0][jm-1]-lf*work7_local_1[0][jm-1];
+    gb_local[0][jm-1] = hh1*work5_local_0[0][jm-1] + hh3*work5_local_1[0][jm-1]+hinv*tauz_local[0][jm-1] + lf*hh1*work7_local_0[0][jm-1]+lf*hh3*work7_local_1[0][jm-1];
   }
-  if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
-    t2a[im-1][jm-1] = t2c[im-1][jm-1] - t2d[im-1][jm-1]+eig2*t2g[im-1][jm-1] + h1inv*t2h[im-1][jm-1]+lf*t2e[im-1][jm-1] - lf*t2f[im-1][jm-1];
-    t2b[im-1][jm-1] = hh1*t2c[im-1][jm-1] + hh3*t2d[im-1][jm-1]+hinv*t2h[im-1][jm-1] + lf*hh1*t2e[im-1][jm-1] + lf*hh3*t2f[im-1][jm-1];
+  if ((down_neighbor == -1) && (right_neighbor == -1)) {
+    ga_local[im-1][jm-1] = work5_local_0[im-1][jm-1] - work5_local_1[im-1][jm-1]+eig2*work6_local[im-1][jm-1] + h1inv*tauz_local[im-1][jm-1]+lf*work7_local_0[im-1][jm-1] - lf*work7_local_1[im-1][jm-1];
+    gb_local[im-1][jm-1] = hh1*work5_local_0[im-1][jm-1] + hh3*work5_local_1[im-1][jm-1]+hinv*tauz_local[im-1][jm-1] + lf*hh1*work7_local_0[im-1][jm-1] + lf*hh3*work7_local_1[im-1][jm-1];
   }
-  if (gp[procid].neighbors[UP] == -1) {
-    double* t1a = (double *) t2a[0];
-    double* t1b = (double *) t2b[0];
-    double* t1c = (double *) t2c[0];
-    double* t1d = (double *) t2d[0];
-    double* t1e = (double *) t2e[0];
-    double* t1f = (double *) t2f[0];
-    double* t1g = (double *) t2g[0];
-    double* t1h = (double *) t2h[0];
-    for(long j = firstcol; j <= lastcol; j++) {
-      t1a[j] = t1c[j]-t1d[j] + eig2*t1g[j]+h1inv*t1h[j] + lf*t1e[j]-lf*t1f[j];
-      t1b[j] = hh1*t1c[j] + hh3*t1d[j]+hinv*t1h[j] + lf*hh1*t1e[j]+lf*hh3*t1f[j];
+  if (up_neighbor == -1) {
+    double* ga_local_0 = (double *) ga_local[0];
+    double* gb_local_0 = (double *) gb_local[0];
+    double* t1c = (double *) work5_local_0[0];
+    double* t1d = (double *) work5_local_1[0];
+    double* t1e = (double *) work7_local_0[0];
+    double* t1f = (double *) work7_local_1[0];
+    double* t1g = (double *) work6_local[0];
+    double* t1h = (double *) tauz_local[0];
+    for(long col = firstcol; col <= lastcol; col++) {
+      ga_local_0[col] = t1c[col]-t1d[col] + eig2*t1g[col]+h1inv*t1h[col] + lf*t1e[col]-lf*t1f[col];
+      gb_local_0[col] = hh1*t1c[col] + hh3*t1d[col]+hinv*t1h[col] + lf*hh1*t1e[col]+lf*hh3*t1f[col];
     }
   }
-  if (gp[procid].neighbors[DOWN] == -1) {
-    double* t1a = (double *) t2a[im-1];
-    double* t1b = (double *) t2b[im-1];
-    double* t1c = (double *) t2c[im-1];
-    double* t1d = (double *) t2d[im-1];
-    double* t1e = (double *) t2e[im-1];
-    double* t1f = (double *) t2f[im-1];
-    double* t1g = (double *) t2g[im-1];
-    double* t1h = (double *) t2h[im-1];
-    for(long j = firstcol; j <= lastcol; j++) {
-      t1a[j] = t1c[j] - t1d[j]+eig2*t1g[j] + h1inv*t1h[j]+lf*t1e[j] - lf*t1f[j];
-      t1b[j] = hh1*t1c[j] + hh3*t1d[j]+hinv*t1h[j] + lf*hh1*t1e[j]+lf*hh3*t1f[j];
+  if (down_neighbor == -1) {
+    double* ga_local_last = (double *) ga_local[im-1];
+    double* gb_local_last = (double *) gb_local[im-1];
+    double* t1c = (double *) work5_local_0[im-1];
+    double* t1d = (double *) work5_local_1[im-1];
+    double* t1e = (double *) work7_local_0[im-1];
+    double* t1f = (double *) work7_local_1[im-1];
+    double* t1g = (double *) work6_local[im-1];
+    double* t1h = (double *) tauz_local[im-1];
+    for(long col = firstcol; col <= lastcol; col++) {
+      ga_local_last[col] = t1c[col] - t1d[col]+eig2*t1g[col] + h1inv*t1h[col]+lf*t1e[col] - lf*t1f[col];
+      gb_local_last[col] = hh1*t1c[col] + hh3*t1d[col]+hinv*t1h[col] + lf*hh1*t1e[col]+lf*hh3*t1f[col];
     }
   }
-  if (gp[procid].neighbors[LEFT] == -1) {
-    for(long j = firstrow; j <= lastrow; j++) {
-      t2a[j][0] = t2c[j][0]-t2d[j][0] + eig2*t2g[j][0]+h1inv*t2h[j][0] + lf*t2e[j][0]-lf*t2f[j][0];
-      t2b[j][0] = hh1*t2c[j][0] + hh3*t2d[j][0]+hinv*t2h[j][0] + lf*hh1*t2e[j][0]+lf*hh3*t2f[j][0];
+  if (left_neighbor == -1) {
+    for(long row = firstrow; row <= lastrow; row++) {
+      ga_local[row][0] = work5_local_0[row][0]-work5_local_1[row][0] + eig2*work6_local[row][0]+h1inv*tauz_local[row][0] + lf*work7_local_0[row][0]-lf*work7_local_1[row][0];
+      gb_local[row][0] = hh1*work5_local_0[row][0] + hh3*work5_local_1[row][0]+hinv*tauz_local[row][0] + lf*hh1*work7_local_0[row][0]+lf*hh3*work7_local_1[row][0];
     }
   }
-  if (gp[procid].neighbors[RIGHT] == -1) {
-    for(long j = firstrow; j <= lastrow; j++) {
-      t2a[j][jm-1] = t2c[j][jm-1] - t2d[j][jm-1]+eig2*t2g[j][jm-1] + h1inv*t2h[j][jm-1]+lf*t2e[j][jm-1] - lf*t2f[j][jm-1];
-      t2b[j][jm-1] = hh1*t2c[j][jm-1] + hh3*t2d[j][jm-1]+hinv*t2h[j][jm-1] + lf*hh1*t2e[j][jm-1]+lf*hh3*t2f[j][jm-1];
+  if (right_neighbor == -1) {
+    for(long row = firstrow; row <= lastrow; row++) {
+      ga_local[row][jm-1] = work5_local_0[row][jm-1] - work5_local_1[row][jm-1]+eig2*work6_local[row][jm-1] + h1inv*tauz_local[row][jm-1]+lf*work7_local_0[row][jm-1] - lf*work7_local_1[row][jm-1];
+      gb_local[row][jm-1] = hh1*work5_local_0[row][jm-1] + hh3*work5_local_1[row][jm-1]+hinv*tauz_local[row][jm-1] + lf*hh1*work7_local_0[row][jm-1]+lf*hh3*work7_local_1[row][jm-1];
     }
   }
 
   for(long i = firstrow; i <= lastrow; i++) {
-    double* t1a = (double *) t2a[i];
-    double* t1b = (double *) t2b[i];
-    double* t1c = (double *) t2c[i];
-    double* t1d = (double *) t2d[i];
-    double* t1e = (double *) t2e[i];
-    double* t1f = (double *) t2f[i];
-    double* t1g = (double *) t2g[i];
-    double* t1h = (double *) t2h[i];
-    for(long iindex = firstcol; iindex <= lastcol; iindex++) { 
-      t1a[iindex] = t1c[iindex] - t1d[iindex]+eig2*t1g[iindex] + h1inv*t1h[iindex]+lf*t1e[iindex] - lf*t1f[iindex];
-      t1b[iindex] = hh1*t1c[iindex] + hh3*t1d[iindex]+hinv*t1h[iindex] + lf*hh1*t1e[iindex] + lf*hh3*t1f[iindex];
+    double* ga_local_i = (double *) ga_local[i];
+    double* gb_local_i = (double *) gb_local[i];
+    double* t1c = (double *) work5_local_0[i];
+    double* t1d = (double *) work5_local_1[i];
+    double* t1e = (double *) work7_local_0[i];
+    double* t1f = (double *) work7_local_1[i];
+    double* t1g = (double *) work6_local[i];
+    double* t1h = (double *) tauz_local[i];
+    for(long col = firstcol; col <= lastcol; col++) { 
+      ga_local_i[col] = t1c[col] - t1d[col]+eig2*t1g[col] + h1inv*t1h[col]+lf*t1e[col] - lf*t1f[col];
+      gb_local_i[col] = hh1*t1c[col] + hh3*t1d[col]+hinv*t1h[col] + lf*hh1*t1e[col] + lf*hh3*t1f[col];
     }
   }
    
@@ -313,52 +318,51 @@ void slave2(long procid, long firstrow, long lastrow, long numrows, long firstco
   long jst = jstart;
   long jen = jend;
 
-  if (gp[procid].neighbors[UP] == -1) {
+  if (up_neighbor == -1) {
     istart = 0;
   }
-  if (gp[procid].neighbors[LEFT] == -1) {
+  if (left_neighbor == -1) {
     jstart = 0;
   }
-  if (gp[procid].neighbors[DOWN] == -1) {
+  if (down_neighbor == -1) {
     iend = im-1;
   }
-  if (gp[procid].neighbors[RIGHT] == -1) {
+  if (right_neighbor == -1) {
     jend = jm-1;
   }
-  t2a = (double **) rhs_multi[procid][numlev-1];
-  t2b = (double **) ga[procid];
-  t2c = (double **) oldga[procid];
-  t2d = (double **) q_multi[procid][numlev-1];
+  double** rhs_multi_local = (double **) rhs_multi[procid][numlev-1];
+  double** t2c = (double **) oldga[procid];
+  double** t2d = (double **) q_multi[procid][numlev-1];
   for(long i = istart; i <= iend; i++) {
-    double* t1a = (double *) t2a[i];
-    double* t1b = (double *) t2b[i];
+    double* t1a = (double *) rhs_multi_local[i];
+    double* t1b = (double *) ga_local[i];
     for(long j = jstart; j <= jend; j++) {
       t1a[j] = t1b[j] * ressqr;
     }
   }
 
-  if (gp[procid].neighbors[UP] == -1) {
+  if (up_neighbor == -1) {
     double* t1d = (double *) t2d[0];
-    double* t1b = (double *) t2b[0];
+    double* t1b = (double *) ga_local[0];
     for(long j = jstart; j <= jend; j++) {
       t1d[j] = t1b[j];
     }
   }
-  if (gp[procid].neighbors[DOWN] == -1) {
+  if (down_neighbor == -1) {
     double* t1d = (double *) t2d[im-1];
-    double* t1b = (double *) t2b[im-1];
+    double* t1b = (double *) ga_local[im-1];
     for(long j = jstart; j <= jend; j++) {
       t1d[j] = t1b[j];
     }
   }
-  if (gp[procid].neighbors[LEFT] == -1) {
+  if (left_neighbor == -1) {
     for(long i = istart; i <= iend; i++) {
-      t2d[i][0] = t2b[i][0];
+      t2d[i][0] = ga_local[i][0];
     }
   }
-  if (gp[procid].neighbors[RIGHT] == -1) {
+  if (right_neighbor == -1) {
     for(long i = istart; i <= iend; i++) {
-      t2d[i][jm-1] = t2b[i][jm-1];
+      t2d[i][jm-1] = ga_local[i][jm-1];
     }
   }
 
@@ -382,7 +386,7 @@ void slave2(long procid, long firstrow, long lastrow, long numrows, long firstco
   /*  copy the solution for use as initial guess in next time-step  */
 
   for(long i = istart; i <= iend; i++) {
-    double* t1b = (double *) t2b[i];
+    double* t1b = (double *) ga_local[i];
     double* t1c = (double *) t2c[i];
     double* t1d = (double *) t2d[i];
     for(long j = jstart; j <= jend; j++) {
@@ -420,39 +424,37 @@ void slave2(long procid, long firstrow, long lastrow, long numrows, long firstco
    augment ga(i,j) with [-psiai/psibi]*psib(i,j) */
   addValuesWithWeight(ga[procid], ga[procid], (-global->psiai)/(global->psibi), psib[procid], gp[procid].neighbors, firstrow, lastrow, firstcol, lastcol);
 
-  t2a = (double **) rhs_multi[procid][numlev-1];
-  t2b = (double **) gb[procid];
   t2c = (double **) oldgb[procid];
   t2d = (double **) q_multi[procid][numlev-1];
   for(long i = istart; i <= iend; i++) {
-    double* t1a = (double *) t2a[i];
-    double* t1b = (double *) t2b[i];
+    double* t1a = (double *) rhs_multi_local[i];
+    double* t1b = (double *) gb_local[i];
     for(long j = jstart; j <= jend; j++) {
       t1a[j] = t1b[j] * ressqr;
     }
   }
-  if (gp[procid].neighbors[UP] == -1) {
+  if (up_neighbor == -1) {
     double* t1d = (double *) t2d[0];
-    double* t1b = (double *) t2b[0];
+    double* t1b = (double *) gb_local[0];
     for(long j = jstart; j <= jend; j++) {
       t1d[j] = t1b[j];
     }
   }
-  if (gp[procid].neighbors[DOWN] == -1) {
+  if (down_neighbor == -1) {
     double* t1d = (double *) t2d[im-1];
-    double* t1b = (double *) t2b[im-1];
+    double* t1b = (double *) gb_local[im-1];
     for(long j = jstart; j <= jend; j++) {
       t1d[j] = t1b[j];
     }
   }
-  if (gp[procid].neighbors[LEFT] == -1) {
+  if (left_neighbor == -1) {
     for(long i = istart; i <= iend; i++) {
-      t2d[i][0] = t2b[i][0];
+      t2d[i][0] = gb_local[i][0];
     }
   }
-  if (gp[procid].neighbors[RIGHT] == -1) {
+  if (right_neighbor == -1) {
     for(long i = istart; i <= iend; i++) {
-      t2d[i][jm-1] = t2b[i][jm-1];
+      t2d[i][jm-1] = gb_local[i][jm-1];
     }
   }
 
@@ -467,7 +469,7 @@ void slave2(long procid, long firstrow, long lastrow, long numrows, long firstco
   multig(procid);
 
   for(long i = istart; i <= iend; i++) {
-    double* t1b = (double *) t2b[i];
+    double* t1b = (double *) gb_local[i];
     double* t1c = (double *) t2c[i];
     double* t1d = (double *) t2d[i];
     for(long j = jstart; j <= jend; j++) {

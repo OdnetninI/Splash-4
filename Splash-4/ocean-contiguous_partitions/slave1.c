@@ -28,6 +28,11 @@ void slave() {
   double ressqr = lev_res[numlev-1] * lev_res[numlev-1];
   long procid = FETCH_ADD(global->id, 1);
 
+  long up_neighbor = gp[procid].neighbors[UP];
+  long down_neighbor = gp[procid].neighbors[DOWN];
+  long left_neighbor = gp[procid].neighbors[LEFT];
+  long right_neighbor = gp[procid].neighbors[RIGHT];
+
   /* POSSIBLE ENHANCEMENT:  Here is where one might pin processes to
    processors to avoid migration. */
 
@@ -106,14 +111,14 @@ void slave() {
 
   */
 
-  double** t2a = (double **) oldga[procid];
-  double** t2b = (double **) oldgb[procid];
+  double** oldga_local = (double **) oldga[procid];
+  double** oldgb_local = (double **) oldgb[procid];
   for (long i = 0; i < im; i++) {
-    double* t1a = (double *) t2a[i];
-    double* t1b = (double *) t2b[i];
+    double* oldga_local_i = (double *) oldga_local[i];
+    double* oldgb_local_i = (double *) oldgb_local[i];
     for (long j = 0; j < jm; j++) {
-       t1a[j] = 0.0;
-       t1b[j] = 0.0;
+       oldga_local_i[j] = 0.0;
+       oldgb_local_i[j] = 0.0;
     }
   }
 
@@ -137,7 +142,7 @@ void slave() {
   double ysca1 = 0.5*ysca;
   if (procid == MASTER) {
     double* t1a = (double *) f;
-    for (long iindex = 0;iindex<=jmx[numlev-1]-1;iindex++) {
+    for (long iindex = 0; iindex <= jmx[numlev-1]-1; iindex++) {
       double y = ((double) iindex)*res;
       t1a[iindex] = f0+beta*(y-ysca1);
     }
@@ -158,99 +163,91 @@ void slave() {
   long jst = jstart;
   long jen = jend;
 
-  if (gp[procid].neighbors[UP] == -1)  istart = 0;
-  if (gp[procid].neighbors[LEFT] == -1) jstart = 0;
-  if (gp[procid].neighbors[DOWN] == -1)  iend = im-1;
-  if (gp[procid].neighbors[RIGHT] == -1)  jend = jm-1;
+  if (up_neighbor == -1)  istart = 0;
+  if (left_neighbor == -1) jstart = 0;
+  if (down_neighbor == -1)  iend = im-1;
+  if (right_neighbor == -1)  jend = jm-1;
 
-  double** my_rhs_multi = (double **) rhs_multi[procid][numlev-1];
-  double** my_psib = (double **) psib[procid];
+  double** rhs_multi_local = (double **) rhs_multi[procid][numlev-1];
+  double** psib_local = (double **) psib[procid];
+  double** q_multi_local = (double **) q_multi[procid][numlev-1];
 
   for(long i = istart; i <= iend; i++) {
-    double* a = (double *) my_rhs_multi[i];
-    double* b = (double *) my_psib[i];
+    double* rhs_multi_local_i = (double *) rhs_multi_local[i];
+    double* psib_local_i = (double *) psib_local[i];
     for(long j = jstart; j <= jend; j++) {
-      a[j] = b[j] * ressqr;
+      rhs_multi_local_i[j] = psib_local_i[j] * ressqr;
     }
   }
 
-  double** my_q_multi = (double **) q_multi[procid][numlev-1];
-  if (gp[procid].neighbors[UP] == -1) {
-    double* a = (double *) my_q_multi[0];
-    double* b = (double *) my_psib[0];
+  if (up_neighbor == -1) {
+    double* q_multi_local_0 = (double *) q_multi_local[0];
+    double* psib_local_0 = (double *) psib_local[0];
     for(long j = jstart; j <= jend; j++) {
-      a[j] = b[j];
+      q_multi_local_0[j] = psib_local_0[j];
     }
-  }
-  if (gp[procid].neighbors[DOWN] == -1) {
-    double* a = (double *) my_q_multi[im-1];
-    double* b = (double *) my_psib[im-1];
-    for(long j = jstart; j <= jend; j++) {
-      a[j] = b[j];
-    }
-  }
-  if (gp[procid].neighbors[LEFT] == -1) {
-    for(long i = istart; i <= iend; i++) {
-      my_q_multi[i][0] = my_psib[i][0];
-    }
-  }
-  if (gp[procid].neighbors[RIGHT] == -1) {
-    for(long i = istart; i <= iend; i++) {
-      my_q_multi[i][jm-1] = my_psib[i][jm-1];
-    }
-  }
-
-  long up = gp[procid].neighbors[UP];
-  if (up != -1) {
-    double* a = (double *) my_psib[0];
-    double* b = (double *) psib[up][im-2];
+  } else {
+    double* psib_local_0 = (double *) psib_local[0];
+    double* psib_neighbor_last = (double *) psib[up_neighbor][im-2];
     for (long i = 1; i < jm-1; i++) {
-      a[i] = b[i];
-    }
-  }
-  long down = gp[procid].neighbors[DOWN];
-  if (down != -1) {
-    double* a = (double *) my_psib[im-1];
-    double* b = (double *) psib[down][1];
-    for (long i = 1; i < jm-1; i++) {
-      a[i] = b[i];
-    }
-  }
-  long left = gp[procid].neighbors[LEFT];
-  if (left != -1) {
-    double** b = (double **) psib[left];
-    for (long i = 1; i < im-1; i++) {
-      my_psib[i][0] = b[i][jm-2];
-    }
-  }
-  long right = gp[procid].neighbors[RIGHT];
-  if (right != -1) {
-    double** b = (double **) psib[right];
-    for (long i = 1; i < im-1; i++) {
-      my_psib[i][jm-1] = b[i][1];
+      psib_local_0[i] = psib_neighbor_last[i];
     }
   }
 
-  t2a = (double **) q_multi[procid][numlev-1];
-  t2b = (double **) psib[procid];
+  if (down_neighbor == -1) {
+    double* q_multi_local_last = (double *) q_multi_local[im-1];
+    double* psib_local_last = (double *) psib_local[im-1];
+    for(long j = jstart; j <= jend; j++) {
+      q_multi_local_last[j] = psib_local_last[j];
+    }
+  } else {
+    double* psib_local_last = (double *) psib_local[im-1];
+    double* psib_neighbor_1 = (double *) psib[down_neighbor][1];
+    for (long i = 1; i < jm-1; i++) {
+      psib_local_last[i] = psib_neighbor_1[i];
+    }
+  }
+
+  if (left_neighbor == -1) {
+    for(long i = istart; i <= iend; i++) {
+      q_multi_local[i][0] = psib_local[i][0];
+    }
+  } else {
+    double** psib_neighbor = (double **) psib[left_neighbor];
+    for (long i = 1; i < im-1; i++) {
+      psib_local[i][0] = psib_neighbor[i][jm-2];
+    }
+  }
+
+  if (right_neighbor == -1) {
+    for(long i = istart; i <= iend; i++) {
+      q_multi_local[i][jm-1] = psib_local[i][jm-1];
+    }
+  } else {
+    double** psib_neighbor = (double **) psib[right_neighbor];
+    for (long i = 1; i < im-1; i++) {
+      psib_local[i][jm-1] = psib_neighbor[i][1];
+    }
+  } 
+
   double fac = 1.0 / (4.0 - ressqr*eig2);
-  for(long i=ist;i<=ien;i++) {
-    double* t1a = (double *) t2a[i];
-    double*t1b = (double *) t2b[i];
-    double*t1c = (double *) t2b[i-1];
-    double*t1d = (double *) t2b[i+1];
+  for(long i = ist; i <= ien; i++) {
+    double* q_multi_local_i = (double *) q_multi_local[i];
+    double* psib_local_i = (double *) psib_local[i];
+    double* psib_local_prev = (double *) psib_local[i-1];
+    double* psib_local_next = (double *) psib_local[i+1];
     for(long j = jst; j <= jen; j++) {
-      t1a[j] = fac * (t1d[j]+t1c[j]+t1b[j+1]+t1b[j-1] - ressqr*t1b[j]);
+      q_multi_local_i[j] = fac * (psib_local_next[j]+psib_local_prev[j]+psib_local_i[j+1]+psib_local_i[j-1] - ressqr*psib_local_i[j]);
     }
   }
 
   multig(procid);
 
-  for(long i=istart;i<=iend;i++) {
-    double* t1a = (double *) t2a[i];
-    double*t1b = (double *) t2b[i];
-    for(long j=jstart;j<=jend;j++) {
-      t1b[j] = t1a[j];
+  for(long i = istart; i <= iend; i++) {
+    double* q_multi_local_i = (double *) q_multi_local[i];
+    double* psib_local_i = (double *) psib_local[i];
+    for(long j = jstart; j <= jend; j++) {
+      psib_local_i[j] = q_multi_local_i[j];
     }
   }
 
@@ -283,63 +280,66 @@ void slave() {
 
   /* compute input curl of wind stress */
 
-  t2a = (double **) tauz[procid];
+  double** tauz_local = (double **) tauz[procid];
   ysca1 = .5*ysca;
   double factor= -t0*pi/ysca1;
-  if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-    t2a[0][0] = 0.0;
+
+  if ((up_neighbor == -1) && (left_neighbor == -1)) {
+    tauz_local[0][0] = 0.0;
   }
-  if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[LEFT] == -1)) {
-    t2a[im-1][0] = 0.0;
+  if ((down_neighbor == -1) && (left_neighbor == -1)) {
+    tauz_local[im-1][0] = 0.0;
   }
-  if ((gp[procid].neighbors[UP] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
+  if ((up_neighbor == -1) && (right_neighbor == -1)) {
     double sintemp = pi*((double) jm-1+j_off)*res/ysca1;
     sintemp = sin(sintemp);
-    t2a[0][jm-1] = factor*sintemp;
+    tauz_local[0][jm-1] = factor*sintemp;
   }
-  if ((gp[procid].neighbors[DOWN] == -1) && (gp[procid].neighbors[RIGHT] == -1)) {
+  if ((down_neighbor == -1) && (right_neighbor == -1)) {
     double sintemp = pi*((double) jm-1+j_off)*res/ysca1;
     sintemp = sin(sintemp);
-    t2a[im-1][jm-1] = factor*sintemp;
+    tauz_local[im-1][jm-1] = factor*sintemp;
   }
-  if (gp[procid].neighbors[UP] == -1) {
-    double* t1a = (double *) t2a[0];
+
+  if (up_neighbor == -1) {
+    double* tauz_local_0 = (double *) tauz_local[0];
     for(long j=firstcol;j<=lastcol;j++) {
       double sintemp = pi*((double) j+j_off)*res/ysca1;
       sintemp = sin(sintemp);
       double curlt = factor*sintemp;
-      t1a[j] = curlt;
+      tauz_local_0[j] = curlt;
     }
   }
-  if (gp[procid].neighbors[DOWN] == -1) {
-    double* t1a = (double *) t2a[im-1];
+  if (down_neighbor == -1) {
+    double* tauz_local_last = (double *) tauz_local[im-1];
     for(long j=firstcol;j<=lastcol;j++) {
       double sintemp = pi*((double) j+j_off)*res/ysca1;
       sintemp = sin(sintemp);
       double curlt = factor*sintemp;
-      t1a[j] = curlt;
+      tauz_local_last[j] = curlt;
     }
   }
-  if (gp[procid].neighbors[LEFT] == -1) {
+  if (left_neighbor == -1) {
     for(long j=firstrow;j<=lastrow;j++) {
-      t2a[j][0] = 0.0;
+      tauz_local[j][0] = 0.0;
     }
   }
-  if (gp[procid].neighbors[RIGHT] == -1) {
+  if (right_neighbor == -1) {
     double sintemp = pi*((double) jm-1+j_off)*res/ysca1;
     sintemp = sin(sintemp);
     double curlt = factor*sintemp;
     for(long j=firstrow;j<=lastrow;j++) {
-      t2a[j][jm-1] = curlt;
+      tauz_local[j][jm-1] = curlt;
     }
   }
-  for(long i=firstrow;i<=lastrow;i++) {
-    double* t1a = (double *) t2a[i];
-    for(long iindex=firstcol;iindex<=lastcol;iindex++) {
-      double sintemp = pi*((double) iindex+j_off)*res/ysca1;
+
+  for(long i = firstrow; i <= lastrow; i++) {
+    double* tauz_local_i = (double *) tauz_local[i];
+    for(long col = firstcol; col <= lastcol; col++) {
+      double sintemp = pi*((double) col+j_off)*res/ysca1;
       sintemp = sin(sintemp);
       double curlt = factor*sintemp;
-      t1a[iindex] = curlt;
+      tauz_local_i[col] = curlt;
     }
   }
 
