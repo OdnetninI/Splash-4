@@ -38,89 +38,9 @@ void slave() {
 
   /* POSSIBLE ENHANCEMENT:  Here is where one might distribute
    data structures across physically distributed memories as
-   desired.
+   desired. */
 
-   One way to do this is as follows.  The function allocate(START,SIZE,I)
-   is assumed to place all addresses x such that
-   (START <= x < START+SIZE) on node I.
-
-   long d_size;
-   unsigned long g_size;
-   unsigned long mg_size;
-
-   if (procid == MASTER) {
-     g_size = ((jmx[numlev-1]-2)/xprocs+2)*((imx[numlev-1]-2)/yprocs+2)*sizeof(double) +
-              ((imx[numlev-1]-2)/yprocs+2)*sizeof(double *);
-
-     mg_size = numlev*sizeof(double **);
-     for (i=0;i<numlev;i++) {
-       mg_size+=((imx[i]-2)/yprocs+2)*((jmx[i]-2)/xprocs+2)*sizeof(double)+
-                ((imx[i]-2)/yprocs+2)*sizeof(double *);
-     }
-     for (i= 0;i<nprocs;i++) {
-       d_size = 2*sizeof(double **);
-       allocate((unsigned long) psi[i],d_size,i);
-       allocate((unsigned long) psim[i],d_size,i);
-       allocate((unsigned long) work1[i],d_size,i);
-       allocate((unsigned long) work4[i],d_size,i);
-       allocate((unsigned long) work5[i],d_size,i);
-       allocate((unsigned long) work7[i],d_size,i);
-       allocate((unsigned long) temparray[i],d_size,i);
-       allocate((unsigned long) psi[i][0],g_size,i);
-       allocate((unsigned long) psi[i][1],g_size,i);
-       allocate((unsigned long) psim[i][0],g_size,i);
-       allocate((unsigned long) psim[i][1],g_size,i);
-       allocate((unsigned long) psium[i],g_size,i);
-       allocate((unsigned long) psilm[i],g_size,i);
-       allocate((unsigned long) psib[i],g_size,i);
-       allocate((unsigned long) ga[i],g_size,i);
-       allocate((unsigned long) gb[i],g_size,i);
-       allocate((unsigned long) work1[i][0],g_size,i);
-       allocate((unsigned long) work1[i][1],g_size,i);
-       allocate((unsigned long) work2[i],g_size,i);
-       allocate((unsigned long) work3[i],g_size,i);
-       allocate((unsigned long) work4[i][0],g_size,i);
-       allocate((unsigned long) work4[i][1],g_size,i);
-       allocate((unsigned long) work5[i][0],g_size,i);
-       allocate((unsigned long) work5[i][1],g_size,i);
-       allocate((unsigned long) work6[i],g_size,i);
-       allocate((unsigned long) work7[i][0],g_size,i);
-       allocate((unsigned long) work7[i][1],g_size,i);
-       allocate((unsigned long) temparray[i][0],g_size,i);
-       allocate((unsigned long) temparray[i][1],g_size,i);
-       allocate((unsigned long) tauz[i],g_size,i);
-       allocate((unsigned long) oldga[i],g_size,i);
-       allocate((unsigned long) oldgb[i],g_size,i);
-       d_size = numlev * sizeof(long);
-       allocate((unsigned long) gp[i].rel_num_x,d_size,i);
-       allocate((unsigned long) gp[i].rel_num_y,d_size,i);
-       allocate((unsigned long) gp[i].eist,d_size,i);
-       allocate((unsigned long) gp[i].ejst,d_size,i);
-       allocate((unsigned long) gp[i].oist,d_size,i);
-       allocate((unsigned long) gp[i].ojst,d_size,i);
-       allocate((unsigned long) gp[i].rlist,d_size,i);
-       allocate((unsigned long) gp[i].rljst,d_size,i);
-       allocate((unsigned long) gp[i].rlien,d_size,i);
-       allocate((unsigned long) gp[i].rljen,d_size,i);
-
-       allocate((unsigned long) q_multi[i],mg_size,i);
-       allocate((unsigned long) rhs_multi[i],mg_size,i);
-       allocate((unsigned long) &(gp[i]),sizeof(struct Global_Private),i);
-     }
-   }
-
-  */
-
-  double** oldga_local = (double **) oldga[procid];
-  double** oldgb_local = (double **) oldgb[procid];
-  for (long i = 0; i < im; i++) {
-    double* oldga_local_i = (double *) oldga_local[i];
-    double* oldgb_local_i = (double *) oldgb_local[i];
-    for (long j = 0; j < jm; j++) {
-       oldga_local_i[j] = 0.0;
-       oldgb_local_i[j] = 0.0;
-    }
-  }
+  Matrix_multi2_set(double, 0.0, oldga[procid], oldgb[procid], 0, im, 0, jm);
 
   long firstcol = 1;
   long lastcol = firstcol + gp[procid].rel_num_x[numlev-1] - 1;
@@ -138,14 +58,10 @@ void slave() {
   double dhour = 0.0;
   long nstep = 0 ;
   double day = 0.0;
-
   double ysca1 = 0.5*ysca;
+
   if (procid == MASTER) {
-    double* t1a = (double *) f;
-    for (long iindex = 0; iindex <= jmx[numlev-1]-1; iindex++) {
-      double y = ((double) iindex)*res;
-      t1a[iindex] = f0+beta*(y-ysca1);
-    }
+    Vector_set(double, (f0 + beta * ((((double) _i) * res) - ysca1)), f, 0, jmx[numlev-1]-1);
   }
 
   initializeWithBorders(psium[procid], gp[procid].neighbors, firstrow, lastrow, firstcol, lastcol, 0.0D);
@@ -172,63 +88,19 @@ void slave() {
   double** psib_local = (double **) psib[procid];
   double** q_multi_local = (double **) q_multi[procid][numlev-1];
 
-  for(long i = istart; i <= iend; i++) {
-    double* rhs_multi_local_i = (double *) rhs_multi_local[i];
-    double* psib_local_i = (double *) psib_local[i];
-    for(long j = jstart; j <= jend; j++) {
-      rhs_multi_local_i[j] = psib_local_i[j] * ressqr;
-    }
-  }
+  Matrix_copy_coef(double, rhs_multi_local, psib_local, ressqr, istart, iend, jstart, jend);
 
-  if (up_neighbor == -1) {
-    double* q_multi_local_0 = (double *) q_multi_local[0];
-    double* psib_local_0 = (double *) psib_local[0];
-    for(long j = jstart; j <= jend; j++) {
-      q_multi_local_0[j] = psib_local_0[j];
-    }
-  } else {
-    double* psib_local_0 = (double *) psib_local[0];
-    double* psib_neighbor_last = (double *) psib[up_neighbor][im-2];
-    for (long i = 1; i < jm-1; i++) {
-      psib_local_0[i] = psib_neighbor_last[i];
-    }
-  }
+  if (up_neighbor == -1) { Vector_copy(double, q_multi_local[0], psib_local[0], jstart, jend); }
+  else { Vector_copy(double, psib_local[0], psib[up_neighbor][im-2], 1, jm - 1); }
 
-  if (down_neighbor == -1) {
-    double* q_multi_local_last = (double *) q_multi_local[im-1];
-    double* psib_local_last = (double *) psib_local[im-1];
-    for(long j = jstart; j <= jend; j++) {
-      q_multi_local_last[j] = psib_local_last[j];
-    }
-  } else {
-    double* psib_local_last = (double *) psib_local[im-1];
-    double* psib_neighbor_1 = (double *) psib[down_neighbor][1];
-    for (long i = 1; i < jm-1; i++) {
-      psib_local_last[i] = psib_neighbor_1[i];
-    }
-  }
+  if (down_neighbor == -1) { Vector_copy(double, q_multi_local[0], psib_local[im-1], jstart, jend); }
+  else { Vector_copy(double, psib_local[im-1], psib[down_neighbor][1], 1, jm - 1); }
 
-  if (left_neighbor == -1) {
-    for(long i = istart; i <= iend; i++) {
-      q_multi_local[i][0] = psib_local[i][0];
-    }
-  } else {
-    double** psib_neighbor = (double **) psib[left_neighbor];
-    for (long i = 1; i < im-1; i++) {
-      psib_local[i][0] = psib_neighbor[i][jm-2];
-    }
-  }
+  if (left_neighbor == -1) { Matrix_copy_col(double, q_multi_local, psib_local, istart, iend, 0, 0); }
+  else { Matrix_copy_col(double, psib_local, psib[left_neighbor], 1, im-1, 0, jm-2); }
 
-  if (right_neighbor == -1) {
-    for(long i = istart; i <= iend; i++) {
-      q_multi_local[i][jm-1] = psib_local[i][jm-1];
-    }
-  } else {
-    double** psib_neighbor = (double **) psib[right_neighbor];
-    for (long i = 1; i < im-1; i++) {
-      psib_local[i][jm-1] = psib_neighbor[i][1];
-    }
-  } 
+  if (right_neighbor == -1) { Matrix_copy_col(double, q_multi_local, psib_local, istart, iend, jm-1, jm-1); }
+  else { Matrix_copy_col(double, psib_local, psib[right_neighbor], 1, im-1, jm-1, 1); }
 
   double fac = 1.0 / (4.0 - ressqr*eig2);
   for(long i = ist; i <= ien; i++) {
@@ -243,13 +115,7 @@ void slave() {
 
   multig(procid);
 
-  for(long i = istart; i <= iend; i++) {
-    double* q_multi_local_i = (double *) q_multi_local[i];
-    double* psib_local_i = (double *) psib_local[i];
-    for(long j = jstart; j <= jend; j++) {
-      psib_local_i[j] = q_multi_local_i[j];
-    }
-  }
+  Matrix_copy(double, q_multi_local, psib_local, istart, iend, jstart, jend);
 
   /* update the local running sum psibipriv by summing all the resulting
    values in that process's share of the psib matrix   */
@@ -284,64 +150,23 @@ void slave() {
   ysca1 = .5*ysca;
   double factor= -t0*pi/ysca1;
 
-  if ((up_neighbor == -1) && (left_neighbor == -1)) {
-    tauz_local[0][0] = 0.0;
-  }
-  if ((down_neighbor == -1) && (left_neighbor == -1)) {
-    tauz_local[im-1][0] = 0.0;
-  }
-  if ((up_neighbor == -1) && (right_neighbor == -1)) {
-    double sintemp = pi*((double) jm-1+j_off)*res/ysca1;
-    sintemp = sin(sintemp);
-    tauz_local[0][jm-1] = factor*sintemp;
-  }
-  if ((down_neighbor == -1) && (right_neighbor == -1)) {
-    double sintemp = pi*((double) jm-1+j_off)*res/ysca1;
-    sintemp = sin(sintemp);
-    tauz_local[im-1][jm-1] = factor*sintemp;
-  }
-
-  if (up_neighbor == -1) {
-    double* tauz_local_0 = (double *) tauz_local[0];
-    for(long j=firstcol;j<=lastcol;j++) {
-      double sintemp = pi*((double) j+j_off)*res/ysca1;
-      sintemp = sin(sintemp);
-      double curlt = factor*sintemp;
-      tauz_local_0[j] = curlt;
-    }
-  }
-  if (down_neighbor == -1) {
-    double* tauz_local_last = (double *) tauz_local[im-1];
-    for(long j=firstcol;j<=lastcol;j++) {
-      double sintemp = pi*((double) j+j_off)*res/ysca1;
-      sintemp = sin(sintemp);
-      double curlt = factor*sintemp;
-      tauz_local_last[j] = curlt;
-    }
-  }
   if (left_neighbor == -1) {
-    for(long j=firstrow;j<=lastrow;j++) {
-      tauz_local[j][0] = 0.0;
-    }
-  }
-  if (right_neighbor == -1) {
-    double sintemp = pi*((double) jm-1+j_off)*res/ysca1;
-    sintemp = sin(sintemp);
-    double curlt = factor*sintemp;
-    for(long j=firstrow;j<=lastrow;j++) {
-      tauz_local[j][jm-1] = curlt;
-    }
+    if (up_neighbor == -1) tauz_local[0][0] = 0.0;
+    if (down_neighbor == -1) tauz_local[im-1][0] = 0.0;
+    Matrix_set_col(double, 0.0, tauz_local, firstrow, lastrow, 0);
   }
 
-  for(long i = firstrow; i <= lastrow; i++) {
-    double* tauz_local_i = (double *) tauz_local[i];
-    for(long col = firstcol; col <= lastcol; col++) {
-      double sintemp = pi*((double) col+j_off)*res/ysca1;
-      sintemp = sin(sintemp);
-      double curlt = factor*sintemp;
-      tauz_local_i[col] = curlt;
-    }
+  if (right_neighbor == -1) {
+    double curlt = factor* sin(pi*((double) jm-1 + j_off)*res/ysca1);
+    if (up_neighbor == -1) { tauz_local[0][jm-1] = curlt; }
+    if (down_neighbor == -1) { tauz_local[im-1][jm-1] = curlt; }
+    Matrix_set_col(double, curlt, tauz_local, firstrow, lastrow, jm-1);
   }
+
+  if (up_neighbor == -1) { Vector_set(double, (factor* sin(pi*((double) _i + j_off)*res/ysca1)), tauz_local[0], firstcol, lastcol); }
+  if (down_neighbor == -1) { Vector_set(double, (factor* sin(pi*((double) _i + j_off)*res/ysca1)), tauz_local[im-1], firstcol, lastcol); }
+  
+  Matrix_set(double, (factor * sin(pi*((double) _j + j_off)*res/ysca1)), tauz_local, firstrow, lastrow + 1, firstcol, lastcol + 1);
 
   BARRIER(bars->sl_onetime,nprocs);
 

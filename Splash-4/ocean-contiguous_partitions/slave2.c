@@ -318,61 +318,21 @@ void slave2(long procid, long firstrow, long lastrow, long numrows, long firstco
   long jst = jstart;
   long jen = jend;
 
-  if (up_neighbor == -1) {
-    istart = 0;
-  }
-  if (left_neighbor == -1) {
-    jstart = 0;
-  }
-  if (down_neighbor == -1) {
-    iend = im-1;
-  }
-  if (right_neighbor == -1) {
-    jend = jm-1;
-  }
+  if (up_neighbor == -1) istart = 0;
+  if (left_neighbor == -1) jstart = 0;
+  if (down_neighbor == -1) iend = im-1;
+  if (right_neighbor == -1) jend = jm-1;
+  
   double** rhs_multi_local = (double **) rhs_multi[procid][numlev-1];
   double** t2c = (double **) oldga[procid];
   double** t2d = (double **) q_multi[procid][numlev-1];
-  for(long i = istart; i <= iend; i++) {
-    double* t1a = (double *) rhs_multi_local[i];
-    double* t1b = (double *) ga_local[i];
-    for(long j = jstart; j <= jend; j++) {
-      t1a[j] = t1b[j] * ressqr;
-    }
-  }
+  Matrix_copy_coef(double, rhs_multi[procid][numlev-1], ga_local, ressqr, istart, iend + 1, jstart, jend + 1);
 
-  if (up_neighbor == -1) {
-    double* t1d = (double *) t2d[0];
-    double* t1b = (double *) ga_local[0];
-    for(long j = jstart; j <= jend; j++) {
-      t1d[j] = t1b[j];
-    }
-  }
-  if (down_neighbor == -1) {
-    double* t1d = (double *) t2d[im-1];
-    double* t1b = (double *) ga_local[im-1];
-    for(long j = jstart; j <= jend; j++) {
-      t1d[j] = t1b[j];
-    }
-  }
-  if (left_neighbor == -1) {
-    for(long i = istart; i <= iend; i++) {
-      t2d[i][0] = ga_local[i][0];
-    }
-  }
-  if (right_neighbor == -1) {
-    for(long i = istart; i <= iend; i++) {
-      t2d[i][jm-1] = ga_local[i][jm-1];
-    }
-  }
-
-  for(long i = ist; i <= ien; i++) {
-    double* t1d = (double *) t2d[i];
-    double* t1c = (double *) t2c[i];
-    for(long j = jst; j <= jen; j++) {
-      t1d[j] = t1c[j];
-    }
-  }
+  if (up_neighbor == -1) { Vector_copy(double, q_multi[procid][numlev-1][0], ga_local[0], jstart, jend + 1); }
+  if (down_neighbor == -1) { Vector_copy(double, q_multi[procid][numlev-1][im-1], ga_local[im-1], jstart, jend + 1); }
+  if (left_neighbor == -1) { Matrix_copy_col(double, q_multi[procid][numlev-1], ga_local, istart, iend + 1, 0, 0); }
+  if (right_neighbor == -1) { Matrix_copy_col(double, q_multi[procid][numlev-1], ga_local, istart, iend + 1, jm-1, jm-1); }
+  Matrix_copy(double, q_multi[procid][numlev-1], oldga[procid], ist, ien + 1, jst, jen+1);
 
   multig(procid);
 
@@ -384,16 +344,7 @@ void slave2(long procid, long firstrow, long lastrow, long numrows, long firstco
   }
 
   /*  copy the solution for use as initial guess in next time-step  */
-
-  for(long i = istart; i <= iend; i++) {
-    double* t1b = (double *) ga_local[i];
-    double* t1c = (double *) t2c[i];
-    double* t1d = (double *) t2d[i];
-    for(long j = jstart; j <= jend; j++) {
-      t1b[j] = t1d[j];
-      t1c[j] = t1d[j];
-    }
-  }
+  Matrix_copy_to_two_dest(double, ga_local, oldga[procid], q_multi[procid][numlev-1], istart, iend + 1, jstart, jend + 1);
 
   BARRIER(bars->sl_phase_6,nprocs);
 
@@ -426,57 +377,17 @@ void slave2(long procid, long firstrow, long lastrow, long numrows, long firstco
 
   t2c = (double **) oldgb[procid];
   t2d = (double **) q_multi[procid][numlev-1];
-  for(long i = istart; i <= iend; i++) {
-    double* t1a = (double *) rhs_multi_local[i];
-    double* t1b = (double *) gb_local[i];
-    for(long j = jstart; j <= jend; j++) {
-      t1a[j] = t1b[j] * ressqr;
-    }
-  }
-  if (up_neighbor == -1) {
-    double* t1d = (double *) t2d[0];
-    double* t1b = (double *) gb_local[0];
-    for(long j = jstart; j <= jend; j++) {
-      t1d[j] = t1b[j];
-    }
-  }
-  if (down_neighbor == -1) {
-    double* t1d = (double *) t2d[im-1];
-    double* t1b = (double *) gb_local[im-1];
-    for(long j = jstart; j <= jend; j++) {
-      t1d[j] = t1b[j];
-    }
-  }
-  if (left_neighbor == -1) {
-    for(long i = istart; i <= iend; i++) {
-      t2d[i][0] = gb_local[i][0];
-    }
-  }
-  if (right_neighbor == -1) {
-    for(long i = istart; i <= iend; i++) {
-      t2d[i][jm-1] = gb_local[i][jm-1];
-    }
-  }
+  Matrix_copy_coef(double, rhs_multi_local, gb_local, ressqr, istart, iend + 1, jstart, jend + 1);
 
-  for(long i = ist; i <= ien; i++) {
-    double* t1d = (double *) t2d[i];
-    double* t1c = (double *) t2c[i];
-    for(long j = jst; j <= jen; j++) {
-      t1d[j] = t1c[j];
-    }
-  }
+  if (up_neighbor == -1) { Vector_copy(double, q_multi[procid][numlev-1][0], gb_local[0], jstart, jend + 1); }
+  if (down_neighbor == -1) { Vector_copy(double, q_multi[procid][numlev-1][im-1], gb_local[im-1], jstart, jend + 1); }
+  if (left_neighbor == -1) { Matrix_copy_col(double, q_multi[procid][numlev-1], gb_local, istart, iend + 1, 0, 0); }
+  if (right_neighbor == -1) { Matrix_copy_col(double, q_multi[procid][numlev-1], gb_local, istart, iend + 1, jm-1, jm-1); }
+  Matrix_copy(double, q_multi[procid][numlev-1], oldgb[procid], ist, ien + 1, jst, jen+1);
 
   multig(procid);
 
-  for(long i = istart; i <= iend; i++) {
-    double* t1b = (double *) gb_local[i];
-    double* t1c = (double *) t2c[i];
-    double* t1d = (double *) t2d[i];
-    for(long j = jstart; j <= jend; j++) {
-      t1b[j] = t1d[j];
-      t1c[j] = t1d[j];
-    }
-  }
+  Matrix_copy_to_two_dest(double, gb_local, oldgb[procid], q_multi[procid][numlev-1], istart, iend + 1, jstart, jend + 1);
 
 /*      *******************************************************
 
