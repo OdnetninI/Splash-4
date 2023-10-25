@@ -19,6 +19,8 @@
 ! Splash-4/radiosity/glibdumb/*.h
 ! Splash-4/volrend/libtiff/*.c
 ! Splash-4/volrend/libtiff/*.h
+! Splash-4/volrend-no_print_lock/libtiff/*.c
+! Splash-4/volrend-no_print_lock/libtiff/*.h
 
 # Binaries
 Splash-4/barnes/BARNES
@@ -33,6 +35,7 @@ Splash-4/radiosity/RADIOSITY
 Splash-4/radix/RADIX
 Splash-4/raytrace/RAYTRACE
 Splash-4/volrend/VOLREND
+Splash-4/volrend-no_print_lock/VOLREND-NPL
 Splash-4/water-nsquared/WATER-NSQUARED
 Splash-4/water-spatial/WATER-SPATIAL
 

@@ -56,6 +56,7 @@ based on the original Splash-2 characterization paper by Woo et al. [1].
 	./RADIOSITY -p # -ae 5000 -bf 0.1 -en 0.05 -room -batch
 	./RAYTRACE -p# -m64 inputs/car.env
 	./VOLREND # inputs/head 8
+  ./VOLREND-NPL # inputs/head 8
 	./WATER-NSQUARED < inputs/n512-p#
 	./WATER-SPATIAL < inputs/n512-p#
 	KERNELS:

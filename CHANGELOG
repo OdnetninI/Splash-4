@@ -1,0 +1,7 @@
+The list of changes from the release of Splash-4 at IISWC
+
+25 - October -2023: Release Splash-4.0.1
+  - NEW:  A new version for Volrend, Volrend-no_print_lock. The progress printing lock at `adaptative.c.in` have been replaced with a memory location. After the barrier sync, thread 0 prints all the progress in order.
+          Besides the reduction in unnecessary synchronization, the output is always in thread+frame order.
+  - FIX:  The `CLOCK` macro has been replaced with a high-res, more info at issue #2 (https://github.com/OdnetninI/Splash-4/issues/2)
+  - MINI: `SPLASH3_ROI_BEGIN`and `SPLASH3_ROI_END` have been replaced with `SPLASH4_ROI_BEGIN` and `SPLASH4_ROI_END`
